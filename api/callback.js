@@ -11,7 +11,7 @@ export default async function handler(req, res) {
       client_secret: CLIENT_SECRET,
       grant_type: 'authorization_code',
       code: code,
-      redirect_uri: 'https://ioxx-mu.vercel.app/api/callback'
+      redirect_uri: 'https://fault-one.vercel.app/api/callback'
     })
   });
 
