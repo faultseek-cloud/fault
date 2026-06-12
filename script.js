@@ -13,7 +13,7 @@ const addImgBtn = document.getElementById('addImgBtn');
 plusBtn.addEventListener('click', () => {
     const currentIcons = iconsContainer.querySelectorAll('.icon-item:not(.plus-btn)');
     
-    if (currentIcons.length < 3) {
+    if (currentIcons.length < 2) {
         const newIcon = document.createElement('div');
         newIcon.className = 'icon-item';
         newIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`;
@@ -23,10 +23,6 @@ plusBtn.addEventListener('click', () => {
         });
 
         iconsContainer.insertBefore(newIcon, plusBtn);
-        
-        if (currentIcons.length + 1 >= 3) {
-            plusBtn.style.display = 'none';
-        }
     }
 });
 
