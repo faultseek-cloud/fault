@@ -23,6 +23,10 @@ plusBtn.addEventListener('click', () => {
         });
 
         iconsContainer.insertBefore(newIcon, plusBtn);
+
+        if (currentIcons.length + 1 >= 2) {
+            plusBtn.style.display = 'none';
+        }
     }
 });
 
