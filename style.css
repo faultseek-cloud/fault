@@ -18,6 +18,7 @@ body {
     position: fixed;
     top: 0;
     left: 0;
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 .hidden {
@@ -211,15 +212,10 @@ body {
 footer {
     width: 100%;
     padding: 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
     background: #000;
     flex-shrink: 0;
     border-top: 1px solid #1a1a1a;
-}
-
-@media (max-width: 600px) {
-    footer {
-        padding: 10px;
-    }
 }
 
 .footer-wrapper {
