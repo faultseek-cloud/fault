@@ -32,6 +32,10 @@ let typingTimeout;
 
 onChildAdded(ref(db, 'messages'), (snapshot) => {
     const data = snapshot.val();
+    const date = new Date(data.timestamp);
+    const dateStr = date.toLocaleDateString('pt-BR');
+    const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message';
     msgDiv.innerHTML = `
@@ -39,7 +43,7 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
             <img class="msg-avatar" src="https://cdn.discordapp.com/avatars/${data.userId}/${data.avatar}.png">
             <span class="msg-user">${data.username}</span>
             <span class="msg-time" style="font-size: 10px; color: #666; margin-left: 8px;">
-                ${new Date(data.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                ${dateStr} ${timeStr}
             </span>
         </div>
         <div class="msg-text">${data.message}</div>
