@@ -155,15 +155,15 @@ body {
 #user-info {
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* Alinhado à esquerda */
-    padding: 15px 20px;         /* Colado na linha (respiro lateral de 20px) */
+    justify-content: flex-start;
+    padding: 15px 20px;
     border-bottom: 1px solid #1a1a1a;
     flex-shrink: 0;
     height: 60px;
 }
 
 #server-title {
-    font-size: 13px;            /* Tamanho reduzido para um visual limpo */
+    font-size: 13px;
     font-weight: 700;
     color: #fff;
     letter-spacing: 0.5px;
@@ -173,11 +173,11 @@ body {
 
 .content {
     flex: 1;
-    padding: 0 15px 15px 15px; 
+    padding: 0 15px 15px 15px;
     overflow-y: auto;
     display: flex;
     flex-direction: column-reverse;
-    -webkit-overflow-scrolling: touch; 
+    -webkit-overflow-scrolling: touch;
 }
 
 .message {

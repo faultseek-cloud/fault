@@ -104,7 +104,7 @@ plusBtn.addEventListener('click', () => {
         iconsContainer.insertBefore(newIcon, plusBtn);
         
         if (communityIcons.length + 1 >= 3) {
-            plusBtn.style.display = 'none';
+            plusBtn.classList.add('hidden');
         }
     }
 });
