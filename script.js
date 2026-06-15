@@ -49,14 +49,21 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
 
 msgInput.addEventListener('input', () => {
     if (!window.userData) return;
-    set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
+    
+    set(ref(db, 'typing/' + window.userData.id), {
+        username: window.userData.username
+    });
+
     clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => { remove(ref(db, 'typing/' + window.userData.id)); }, 3000);
+    typingTimeout = setTimeout(() => {
+        remove(ref(db, 'typing/' + window.userData.id));
+    }, 3000);
 });
 
 onValue(ref(db, 'typing'), (snapshot) => {
     const typingData = snapshot.val();
     let isSomeoneTyping = false;
+    
     if (typingData) {
         for (let userId in typingData) {
             if (userId !== window.userData?.id) {
@@ -66,6 +73,7 @@ onValue(ref(db, 'typing'), (snapshot) => {
             }
         }
     }
+    
     typingIndicator.style.display = isSomeoneTyping ? 'block' : 'none';
 });
 
@@ -85,21 +93,15 @@ function sendMessage() {
     }
 }
 
-// CORREÇÃO: Limite baseado em ícones de comunidade, excluindo o botão de +
 plusBtn.addEventListener('click', () => {
-    const currentIcons = iconsContainer.querySelectorAll('.icon-item:not(#plusBtn)');
-    
+    const currentIcons = iconsContainer.querySelectorAll('.icon-item:not(.plus-btn)');
     if (currentIcons.length < 3) {
         const newIcon = document.createElement('div');
         newIcon.className = 'icon-item';
         newIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`;
         newIcon.addEventListener('click', () => mainScreen.classList.add('hidden'));
         iconsContainer.insertBefore(newIcon, plusBtn);
-        
-        // Verifica se ao adicionar este, atingiu o limite de 3
-        if (currentIcons.length + 1 >= 3) {
-            plusBtn.style.display = 'none';
-        }
+        if (currentIcons.length + 1 >= 3) plusBtn.style.display = 'none';
     }
 });
 
@@ -136,6 +138,7 @@ if (token) {
     .then(res => res.json())
     .then(user => {
         window.userData = user;
+        // As linhas abaixo foram removidas pois os elementos HTML não existem mais
         loadingScreen.classList.add('hidden');
         mainScreen.classList.remove('hidden');
         sidebar.classList.remove('hidden');
