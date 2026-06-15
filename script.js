@@ -138,8 +138,7 @@ if (token) {
     .then(res => res.json())
     .then(user => {
         window.userData = user;
-        document.getElementById('user-avatar').src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
-        document.getElementById('user-name').textContent = user.username;
+        // As linhas abaixo foram removidas pois os elementos HTML não existem mais
         loadingScreen.classList.add('hidden');
         mainScreen.classList.remove('hidden');
         sidebar.classList.remove('hidden');
