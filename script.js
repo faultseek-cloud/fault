@@ -102,10 +102,6 @@ plusBtn.addEventListener('click', () => {
         newIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`;
         newIcon.addEventListener('click', () => mainScreen.classList.add('hidden'));
         iconsContainer.insertBefore(newIcon, plusBtn);
-        
-        if (communityIcons.length + 1 >= 3) {
-            plusBtn.classList.add('hidden');
-        }
     }
 });
 
