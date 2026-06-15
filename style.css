@@ -25,6 +25,7 @@ body {
     display: none !important;
 }
 
+/* Sidebar principal */
 .sidebar {
     width: 60px;
     height: 100dvh;
@@ -63,6 +64,34 @@ body {
     color: #4ade80;
 }
 
+/* Social Sidebar (Tela de Autenticação) - Ajustada */
+.social-sidebar {
+    position: absolute;
+    left: 20px; /* Alinhado ao canto esquerdo */
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    z-index: 5;
+}
+
+.social-icon {
+    color: #ffffff; /* Cor branca */
+    opacity: 0.5;   /* Leve transparência para estilo moderno */
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.social-icon:hover {
+    opacity: 1; /* Brilha ao passar o mouse */
+    transform: scale(1.1);
+}
+
+/* Estrutura Principal */
 .main-container {
     flex: 1;
     display: flex;
@@ -221,7 +250,7 @@ footer {
 .scroll-bottom-btn {
     position: absolute;
     top: -45px;
-    right: 15px; /* Alinhado à direita */
+    right: 15px;
     background: #1a1a1a;
     border: 1px solid #333;
     color: #fff;
