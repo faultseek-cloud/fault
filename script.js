@@ -62,19 +62,19 @@ msgInput.addEventListener('input', () => {
 
 onValue(ref(db, 'typing'), (snapshot) => {
     const typingData = snapshot.val();
+    let isSomeoneTyping = false;
+    
     if (typingData) {
-        const users = Object.values(typingData);
-        const otherUser = users.find(u => u.username !== window.userData?.username);
-        
-        if (otherUser && typingIndicator) {
-            typingUsername.textContent = otherUser.username;
-            typingIndicator.style.display = 'block';
-        } else if (typingIndicator) {
-            typingIndicator.style.display = 'none';
+        for (let userId in typingData) {
+            if (userId !== window.userData?.id) {
+                typingUsername.textContent = typingData[userId].username;
+                isSomeoneTyping = true;
+                break;
+            }
         }
-    } else if (typingIndicator) {
-        typingIndicator.style.display = 'none';
     }
+    
+    typingIndicator.style.display = isSomeoneTyping ? 'block' : 'none';
 });
 
 function sendMessage() {
