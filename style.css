@@ -215,15 +215,13 @@ footer {
     background: #000;
     flex-shrink: 0;
     border-top: 1px solid #1a1a1a;
-    position: relative; /* Necessário para o posicionamento absoluto do botão */
+    position: relative;
 }
 
-/* Novo botão de Scroll */
 .scroll-bottom-btn {
     position: absolute;
     top: -45px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 15px; /* Alinhado à direita */
     background: #1a1a1a;
     border: 1px solid #333;
     color: #fff;
