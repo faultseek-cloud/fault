@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBX5mGILY9TT_M8S79X4UTRbHinH1PB6gI",
@@ -25,6 +25,10 @@ const sendBtn = document.getElementById('sendBtn');
 const messagesContainer = document.getElementById('messages-container');
 const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
+const typingIndicator = document.getElementById('typing-indicator');
+const typingUsername = document.getElementById('typing-username');
+
+let typingTimeout;
 
 onChildAdded(ref(db, 'messages'), (snapshot) => {
     const data = snapshot.val();
@@ -43,6 +47,36 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
     messagesContainer.prepend(msgDiv);
 });
 
+msgInput.addEventListener('input', () => {
+    if (!window.userData) return;
+    
+    set(ref(db, 'typing/' + window.userData.id), {
+        username: window.userData.username
+    });
+
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        remove(ref(db, 'typing/' + window.userData.id));
+    }, 3000);
+});
+
+onValue(ref(db, 'typing'), (snapshot) => {
+    const typingData = snapshot.val();
+    if (typingData) {
+        const users = Object.values(typingData);
+        const otherUser = users.find(u => u.username !== window.userData?.username);
+        
+        if (otherUser && typingIndicator) {
+            typingUsername.textContent = otherUser.username;
+            typingIndicator.style.display = 'block';
+        } else if (typingIndicator) {
+            typingIndicator.style.display = 'none';
+        }
+    } else if (typingIndicator) {
+        typingIndicator.style.display = 'none';
+    }
+});
+
 function sendMessage() {
     const text = msgInput.value.trim();
     if (text !== "" && window.userData) {
@@ -55,6 +89,7 @@ function sendMessage() {
         });
         msgInput.value = '';
         sendBtn.classList.remove('active');
+        remove(ref(db, 'typing/' + window.userData.id));
     }
 }
 
@@ -64,15 +99,9 @@ plusBtn.addEventListener('click', () => {
         const newIcon = document.createElement('div');
         newIcon.className = 'icon-item';
         newIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`;
-        
-        newIcon.addEventListener('click', () => {
-            mainScreen.classList.add('hidden');
-        });
-
+        newIcon.addEventListener('click', () => mainScreen.classList.add('hidden'));
         iconsContainer.insertBefore(newIcon, plusBtn);
-        if (currentIcons.length + 1 >= 3) {
-            plusBtn.style.display = 'none';
-        }
+        if (currentIcons.length + 1 >= 3) plusBtn.style.display = 'none';
     }
 });
 
@@ -80,7 +109,7 @@ addImgBtn.addEventListener('click', () => fileInput.click());
 
 fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file) {
+    if (file && window.userData) {
         const reader = new FileReader();
         reader.onload = (event) => {
             const text = `<img src="${event.target.result}" style="max-width: 200px; border-radius: 8px; margin-top: 5px; display: block;">`;
@@ -103,7 +132,6 @@ const token = urlParams.get('access_token');
 if (token) {
     authScreen.classList.add('hidden');
     loadingScreen.classList.remove('hidden');
-
     fetch('https://discord.com/api/users/@me', {
         headers: { Authorization: `Bearer ${token}` }
     })
@@ -112,7 +140,6 @@ if (token) {
         window.userData = user;
         document.getElementById('user-avatar').src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
         document.getElementById('user-name').textContent = user.username;
-        
         loadingScreen.classList.add('hidden');
         mainScreen.classList.remove('hidden');
         sidebar.classList.remove('hidden');
@@ -121,11 +148,5 @@ if (token) {
 }
 
 sendBtn.addEventListener('click', sendMessage);
-
-msgInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-});
-
-msgInput.addEventListener('input', () => {
-    sendBtn.classList.toggle('active', msgInput.value.trim().length > 0);
-});
+msgInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+msgInput.addEventListener('input', () => sendBtn.classList.toggle('active', msgInput.value.trim().length > 0));
