@@ -50,10 +50,16 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
         <div class="msg-text">${data.message}</div>
     `;
     messagesContainer.prepend(msgDiv);
+
+    // Se o usuário estiver no final, desce automaticamente
+    if (messagesContainer.scrollTop > -100) {
+        messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 });
 
 messagesContainer.addEventListener('scroll', () => {
-    if (messagesContainer.scrollTop < -200) {
+    // Esconde/mostra o botão baseado na distância do topo
+    if (messagesContainer.scrollTop < -300) {
         scrollBottomBtn.classList.remove('hidden');
     } else {
         scrollBottomBtn.classList.add('hidden');
@@ -61,7 +67,11 @@ messagesContainer.addEventListener('scroll', () => {
 });
 
 scrollBottomBtn.addEventListener('click', () => {
-    messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    // Rolagem suave e controlada
+    messagesContainer.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth' 
+    });
 });
 
 msgInput.addEventListener('input', () => {
