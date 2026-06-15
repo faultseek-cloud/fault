@@ -94,14 +94,18 @@ function sendMessage() {
 }
 
 plusBtn.addEventListener('click', () => {
-    const currentIcons = iconsContainer.querySelectorAll('.icon-item:not(.plus-btn)');
-    if (currentIcons.length < 3) {
+    const communityIcons = iconsContainer.querySelectorAll('.icon-item:not(#plusBtn)');
+    
+    if (communityIcons.length < 3) {
         const newIcon = document.createElement('div');
         newIcon.className = 'icon-item';
         newIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`;
         newIcon.addEventListener('click', () => mainScreen.classList.add('hidden'));
         iconsContainer.insertBefore(newIcon, plusBtn);
-        if (currentIcons.length + 1 >= 3) plusBtn.style.display = 'none';
+        
+        if (communityIcons.length + 1 >= 3) {
+            plusBtn.style.display = 'none';
+        }
     }
 });
 
@@ -138,7 +142,6 @@ if (token) {
     .then(res => res.json())
     .then(user => {
         window.userData = user;
-        // As linhas abaixo foram removidas pois os elementos HTML não existem mais
         loadingScreen.classList.add('hidden');
         mainScreen.classList.remove('hidden');
         sidebar.classList.remove('hidden');
