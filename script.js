@@ -27,6 +27,7 @@ const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
 const typingIndicator = document.getElementById('typing-indicator');
 const typingUsername = document.getElementById('typing-username');
+const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
 let typingTimeout;
 
@@ -49,6 +50,18 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
         <div class="msg-text">${data.message}</div>
     `;
     messagesContainer.prepend(msgDiv);
+});
+
+messagesContainer.addEventListener('scroll', () => {
+    if (messagesContainer.scrollTop < -200) {
+        scrollBottomBtn.classList.remove('hidden');
+    } else {
+        scrollBottomBtn.classList.add('hidden');
+    }
+});
+
+scrollBottomBtn.addEventListener('click', () => {
+    messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 msgInput.addEventListener('input', () => {
@@ -94,6 +107,7 @@ function sendMessage() {
         msgInput.value = '';
         sendBtn.classList.remove('active');
         remove(ref(db, 'typing/' + window.userData.id));
+        messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
@@ -124,6 +138,7 @@ fileInput.addEventListener('change', (e) => {
                 message: text,
                 timestamp: Date.now()
             });
+            messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
         };
         reader.readAsDataURL(file);
     }
