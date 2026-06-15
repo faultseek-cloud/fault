@@ -69,11 +69,14 @@
                     <input type="file" id="fileInput" accept="image/*" style="display: none;">
                     <button class="add-img-btn" id="addImgBtn">+</button>
                     <input type="search" id="msgInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Digite sua mensagem...">
+                    
                     <button class="send-btn" id="sendBtn">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
+                        <span id="mic-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+                        </span>
+                        <span id="send-icon" class="hidden">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </span>
                     </button>
                 </div>
             </footer>

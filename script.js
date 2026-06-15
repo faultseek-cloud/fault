@@ -29,6 +29,10 @@ const typingIndicator = document.getElementById('typing-indicator');
 const typingUsername = document.getElementById('typing-username');
 const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
+// Seletores dos ícones (ajuste os IDs no seu HTML se necessário)
+const micIcon = document.getElementById('mic-icon');
+const sendIcon = document.getElementById('send-icon');
+
 let typingTimeout;
 
 onChildAdded(ref(db, 'messages'), (snapshot) => {
@@ -51,14 +55,12 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
     `;
     messagesContainer.prepend(msgDiv);
 
-    // Se o usuário estiver no final, desce automaticamente
     if (messagesContainer.scrollTop > -100) {
         messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
 });
 
 messagesContainer.addEventListener('scroll', () => {
-    // Esconde/mostra o botão baseado na distância do topo
     if (messagesContainer.scrollTop < -300) {
         scrollBottomBtn.classList.remove('hidden');
     } else {
@@ -67,14 +69,19 @@ messagesContainer.addEventListener('scroll', () => {
 });
 
 scrollBottomBtn.addEventListener('click', () => {
-    // Rolagem suave e controlada
-    messagesContainer.scrollTo({ 
-        top: 0, 
-        behavior: 'smooth' 
-    });
+    messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 msgInput.addEventListener('input', () => {
+    const hasText = msgInput.value.trim().length > 0;
+    
+    // Alternar visibilidade dos ícones
+    if (micIcon && sendIcon) {
+        micIcon.classList.toggle('hidden', hasText);
+        sendIcon.classList.toggle('hidden', !hasText);
+    }
+    sendBtn.classList.toggle('active', hasText);
+
     if (!window.userData) return;
     
     set(ref(db, 'typing/' + window.userData.id), {
@@ -100,7 +107,6 @@ onValue(ref(db, 'typing'), (snapshot) => {
             }
         }
     }
-    
     typingIndicator.style.display = isSomeoneTyping ? 'block' : 'none';
 });
 
@@ -115,7 +121,14 @@ function sendMessage() {
             timestamp: Date.now()
         });
         msgInput.value = '';
+        
+        // Resetar para ícone de microfone após enviar
+        if (micIcon && sendIcon) {
+            micIcon.classList.remove('hidden');
+            sendIcon.classList.add('hidden');
+        }
         sendBtn.classList.remove('active');
+        
         remove(ref(db, 'typing/' + window.userData.id));
         messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -123,7 +136,6 @@ function sendMessage() {
 
 plusBtn.addEventListener('click', () => {
     const communityIcons = iconsContainer.querySelectorAll('.icon-item:not(#plusBtn)');
-    
     if (communityIcons.length < 3) {
         const newIcon = document.createElement('div');
         newIcon.className = 'icon-item';
@@ -176,4 +188,3 @@ if (token) {
 
 sendBtn.addEventListener('click', sendMessage);
 msgInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-msgInput.addEventListener('input', () => sendBtn.classList.toggle('active', msgInput.value.trim().length > 0));
