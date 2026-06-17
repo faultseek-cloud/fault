@@ -212,7 +212,7 @@ body {
 
 .content {
     flex: 1;
-    padding: 0; /* Removido padding para permitir que as imagens encostem nas bordas */
+    padding: 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column-reverse;
@@ -221,10 +221,9 @@ body {
 
 .message {
     margin-bottom: 10px;
-    padding: 0 15px; /* Padding apenas no texto e header */
+    padding: 0 15px;
 }
 
-/* Ajuste específico para as imagens das mensagens */
 .msg-image {
     width: 100%;
     display: block;
@@ -364,14 +363,13 @@ input::-webkit-search-cancel-button {
     color: #fff;
 }
 
-/* Overlay corrigido com fundo preto total */
 .image-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100dvh;
-    background: rgba(0, 0, 0, 1.0); /* Preto absoluto */
+    background: rgba(0, 0, 0, 1.0);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -390,8 +388,8 @@ input::-webkit-search-cancel-button {
     left: 20px;
     width: 40px;
     height: 40px;
-    background: #1a1a1a;
-    border: 1px solid #333;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
     color: #fff;
     display: flex;
@@ -399,10 +397,10 @@ input::-webkit-search-cancel-button {
     justify-content: center;
     cursor: pointer;
     font-size: 24px;
-    transition: all 0.2s;
+    transition: background 0.2s;
     z-index: 1001;
 }
 
 .close-overlay-btn:active {
-    background: #333;
+    background: rgba(0, 0, 0, 0.8);
 }
