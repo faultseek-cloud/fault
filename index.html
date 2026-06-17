@@ -23,15 +23,15 @@
         <div id="auth-screen">
             <div class="social-sidebar">
                 <a href="https://discord.gg/AGCCbEAWA" target="_blank" class="social-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.1 18.099a.082.082 0 0 0 .031.058 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.99.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.126 10.293 10.293 0 0 0 .372-.29.077.077 0 0 1 .077-.013c3.928 1.793 8.18 1.793 12.062 0a.077.077 0 0 1 .078.013c.12.089.246.18.375.29a.077.077 0 0 1-.005.126 12.925 12.925 0 0 1-1.872.892.077.077 0 0 0-.041.106c.36.698.771 1.369 1.225 1.99a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.094-.838-9.42-3.543-13.754a.05.05 0 0 0-.032-.027zM14.5 14.5c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm-5 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M20.31 4.37a19.79 19.79 0 0 0-4.88-1.51.07.07 0 0 0-.08.03c-.21.37-.44.86-.61 1.25a18.27 18.27 0 0 0-5.49 0 12.64 12.64 0 0 0-.62-1.25.07.07 0 0 0-.08-.03A19.74 19.74 0 0 0 3.68 4.37.07.07 0 0 0 3.64 4.4C.53 9.05-.32 13.58.1 18.1a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03 14.09 14.09 0 0 0 1.23-1.99.08.08 0 0 0-.04-.11 13.11 13.11 0 0 1-1.87-.89.08.08 0 0 1-.01-.13 10.29 10.29 0 0 0 .37-.29.08.08 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.08.08 0 0 1 .08.01c.12.09.25.18.37.29a.08.08 0 0 1 0 .13 12.92 12.92 0 0 1-1.87.89.08.08 0 0 0-.04.11c.36.7.77 1.37 1.23 1.99a.08.08 0 0 0 .08.03 19.84 19.84 0 0 0 6-3.03.08.08 0 0 0 .03-.05c.5-5.09-.84-9.42-3.54-13.75a.05.05 0 0 0-.03-.03z"/>
                     </svg>
                 </a>
                 <a href="https://www.instagram.com/betinzzk7" target="_blank" class="social-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
                     </svg>
                 </a>
             </div>
@@ -51,20 +51,16 @@
             <div id="user-info">
                 <span id="server-title">FAULT SERVER</span>
             </div>
-
             <div class="content" id="messages-container"></div>
-            
             <div id="typing-indicator" style="padding: 5px 15px; font-size: 12px; color: #888; display: none;">
                 ... <span id="typing-username"></span> está digitando...
             </div>
-            
             <footer>
                 <button id="scrollBottomBtn" class="scroll-bottom-btn hidden">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                         <path d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
-                
                 <div class="footer-wrapper">
                     <input type="file" id="fileInput" accept="image/*" style="display: none;">
                     <button class="add-img-btn" id="addImgBtn">+</button>
