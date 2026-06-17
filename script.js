@@ -31,6 +31,20 @@ const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
 let typingTimeout;
 
+function openImageOverlay(src) {
+    const overlay = document.createElement('div');
+    overlay.className = 'image-overlay';
+    overlay.innerHTML = `
+        <div class="close-overlay-btn">×</div>
+        <img src="${src}">
+    `;
+    
+    overlay.querySelector('.close-overlay-btn').onclick = () => overlay.remove();
+    overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+    
+    document.body.appendChild(overlay);
+}
+
 onChildAdded(ref(db, 'messages'), (snapshot) => {
     const data = snapshot.val();
     const date = new Date(data.timestamp);
@@ -49,37 +63,32 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
         </div>
         <div class="msg-text">${data.message}</div>
     `;
+    
+    const imgElement = msgDiv.querySelector('img[src^="data:image"]');
+    if (imgElement) {
+        imgElement.style.cursor = 'pointer';
+        imgElement.onclick = () => openImageOverlay(imgElement.src);
+    }
+
     messagesContainer.prepend(msgDiv);
 
-    // Se o usuário estiver no final, desce automaticamente
     if (messagesContainer.scrollTop > -100) {
         messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
 });
 
 messagesContainer.addEventListener('scroll', () => {
-    // Esconde/mostra o botão baseado na distância do topo
-    if (messagesContainer.scrollTop < -300) {
-        scrollBottomBtn.classList.remove('hidden');
-    } else {
-        scrollBottomBtn.classList.add('hidden');
-    }
+    scrollBottomBtn.classList.toggle('hidden', messagesContainer.scrollTop > -300);
 });
 
 scrollBottomBtn.addEventListener('click', () => {
-    // Rolagem suave e controlada
-    messagesContainer.scrollTo({ 
-        top: 0, 
-        behavior: 'smooth' 
-    });
+    messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 msgInput.addEventListener('input', () => {
     if (!window.userData) return;
     
-    set(ref(db, 'typing/' + window.userData.id), {
-        username: window.userData.username
-    });
+    set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
 
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
@@ -100,7 +109,6 @@ onValue(ref(db, 'typing'), (snapshot) => {
             }
         }
     }
-    
     typingIndicator.style.display = isSomeoneTyping ? 'block' : 'none';
 });
 
@@ -123,7 +131,6 @@ function sendMessage() {
 
 plusBtn.addEventListener('click', () => {
     const communityIcons = iconsContainer.querySelectorAll('.icon-item:not(#plusBtn)');
-    
     if (communityIcons.length < 3) {
         const newIcon = document.createElement('div');
         newIcon.className = 'icon-item';
