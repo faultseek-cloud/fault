@@ -212,7 +212,7 @@ body {
 
 .content {
     flex: 1;
-    padding: 0 15px 15px 15px;
+    padding: 10px 15px;
     overflow-y: auto;
     display: flex;
     flex-direction: column-reverse;
@@ -220,13 +220,13 @@ body {
 }
 
 .message {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 .msg-header {
     display: flex;
     align-items: center;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .msg-avatar {
