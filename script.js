@@ -36,8 +36,15 @@ let recordingStartTime;
 
 window.togglePlay = (id) => {
     const audio = document.getElementById(id);
-    if (audio.paused) audio.play();
-    else audio.pause();
+    const btn = document.querySelector(`[data-play-btn="${id}"]`);
+    if (audio.paused) {
+        audio.play();
+        btn.innerHTML = "❚❚";
+    } else {
+        audio.pause();
+        btn.innerHTML = "▶";
+    }
+    audio.onended = () => { btn.innerHTML = "▶"; };
 };
 
 function formatDuration(totalSeconds) {
@@ -94,17 +101,10 @@ scrollBottomBtn.addEventListener('click', () => {
 
 msgInput.addEventListener('input', () => {
     if (!window.userData) return;
-    
     const hasText = msgInput.value.trim().length > 0;
-    if (hasText) {
-        iconMic.classList.add('hidden');
-        iconSend.classList.remove('hidden');
-        iconSend.style.color = '#fff';
-    } else {
-        iconMic.classList.remove('hidden');
-        iconSend.classList.add('hidden');
-        iconSend.style.color = '#444';
-    }
+    iconMic.classList.toggle('hidden', hasText);
+    iconSend.classList.toggle('hidden', !hasText);
+    iconSend.style.color = hasText ? '#fff' : '#444';
 
     set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
     clearTimeout(typingTimeout);
@@ -126,9 +126,7 @@ function sendMessage() {
         msgInput.value = '';
         iconMic.classList.remove('hidden');
         iconSend.classList.add('hidden');
-        iconSend.style.color = '#444';
         remove(ref(db, 'typing/' + window.userData.id));
-        messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
@@ -148,21 +146,21 @@ async function startRecording() {
             const reader = new FileReader();
             reader.readAsDataURL(audioBlob);
             reader.onloadend = () => {
-                const audioId = 'audio_' + Date.now();
+                const audioId = 'a_' + Date.now();
                 push(ref(db, 'messages'), {
                     username: window.userData.username,
                     avatar: window.userData.avatar,
                     userId: window.userData.id,
                     message: `
-                        <div class="audio-message" style="display: flex; align-items: center; gap: 10px; background: #222; padding: 10px; border-radius: 20px; width: fit-content;">
-                            <button class="play-btn" onclick="togglePlay('${audioId}')" style="background: #5865F2; border: none; color: white; border-radius: 50%; width: 35px; height: 35px; cursor: pointer;">▶</button>
+                        <div class="audio-message" style="background: #5865F2; padding: 10px 15px; border-radius: 25px; display: flex; align-items: center; gap: 12px; width: fit-content; margin-top: 5px;">
+                            <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #5865F2; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
                             <audio id="${audioId}" src="${reader.result}"></audio>
                             <div class="waveform" style="display: flex; gap: 3px; align-items: center;">
-                                <div class="wave-bar" style="width: 4px; height: 15px; background: #aaa;"></div>
-                                <div class="wave-bar" style="width: 4px; height: 25px; background: #aaa;"></div>
-                                <div class="wave-bar" style="width: 4px; height: 15px; background: #aaa;"></div>
+                                <div class="wave-bar" style="width: 3px; height: 15px; background: rgba(255,255,255,0.6); border-radius: 2px;"></div>
+                                <div class="wave-bar" style="width: 3px; height: 25px; background: rgba(255,255,255,0.6); border-radius: 2px;"></div>
+                                <div class="wave-bar" style="width: 3px; height: 15px; background: rgba(255,255,255,0.6); border-radius: 2px;"></div>
                             </div>
-                            <span class="audio-duration" style="color: #ccc; font-family: sans-serif;">${durationFormatted}</span>
+                            <span class="audio-duration" style="color: white; font-family: sans-serif; font-size: 13px;">${durationFormatted}</span>
                         </div>`,
                     timestamp: Date.now()
                 });
