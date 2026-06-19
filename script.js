@@ -29,16 +29,15 @@ const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
 const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
-// Criação dos botões modernos de Lixeira e Pausa
 const trashBtn = document.createElement('button');
 trashBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
 trashBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #ff4d4d; margin-right: 10px;";
-addImgBtn.parentNode.insertBefore(trashBtn, addImgBtn.nextSibling);
+addImgBtn.parentNode.insertBefore(trashBtn, addImgBtn);
 
 const pauseBtn = document.createElement('button');
 pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
 pauseBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #fff; margin-right: 10px;";
-trashBtn.parentNode.insertBefore(pauseBtn, trashBtn);
+addImgBtn.parentNode.insertBefore(pauseBtn, trashBtn);
 
 let typingTimeout;
 let mediaRecorder;
@@ -49,6 +48,8 @@ let audioContext;
 let analyser;
 let dataArray;
 let animationId;
+let elapsedPausedTime = 0;
+let lastPauseTime = 0;
 
 function generateWaveBars(count = 20) {
     let bars = "";
@@ -168,9 +169,11 @@ async function startRecording() {
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
         recordingStartTime = Date.now();
+        elapsedPausedTime = 0;
         
         iconMic.classList.add('hidden');
-        iconSend.classList.remove('hidden');
+        iconSend.classList.add('hidden');
+        addImgBtn.style.display = "none";
         trashBtn.style.display = "block";
         pauseBtn.style.display = "block";
         msgInput.value = "0:00 - 2:00";
@@ -178,41 +181,46 @@ async function startRecording() {
         updateRecordingWaveform();
         
         recordingInterval = setInterval(() => {
-            const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
-            msgInput.value = `${formatDuration(elapsed)} - 2:00`;
-            if (elapsed >= 120) stopRecording();
+            if (mediaRecorder.state === "recording") {
+                const elapsed = Math.floor((Date.now() - recordingStartTime - elapsedPausedTime) / 1000);
+                msgInput.value = `${formatDuration(elapsed)} - 2:00`;
+                if (elapsed >= 120) stopRecording();
+            }
         }, 1000);
 
         mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
         mediaRecorder.onstop = () => {
             clearInterval(recordingInterval);
             cancelAnimationFrame(animationId);
-            const totalDuration = formatDuration(Math.floor((Date.now() - recordingStartTime) / 1000));
+            const totalDuration = formatDuration(Math.floor((Date.now() - recordingStartTime - elapsedPausedTime) / 1000));
+            
+            if (audioChunks.length > 0) {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = () => {
+                    const audioId = 'a_' + Date.now();
+                    push(ref(db, 'messages'), {
+                        username: window.userData.username,
+                        avatar: window.userData.avatar,
+                        userId: window.userData.id,
+                        message: `
+                            <div class="audio-message" id="container_${audioId}" style="background: #1a1a1a; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 5px;">
+                                <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #000; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
+                                <audio id="${audioId}" src="${reader.result}"></audio>
+                                <div class="waveform" style="display: flex; gap: 3px; align-items: center;">${generateWaveBars()}</div>
+                                <span style="color:#fff; font-size: 12px;">${totalDuration}</span>
+                            </div>`,
+                        timestamp: Date.now()
+                    });
+                };
+            }
+            
             msgInput.value = '';
             iconMic.classList.remove('hidden');
-            iconSend.classList.add('hidden');
+            addImgBtn.style.display = "block";
             trashBtn.style.display = "none";
             pauseBtn.style.display = "none";
-            
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
-            reader.onloadend = () => {
-                const audioId = 'a_' + Date.now();
-                push(ref(db, 'messages'), {
-                    username: window.userData.username,
-                    avatar: window.userData.avatar,
-                    userId: window.userData.id,
-                    message: `
-                        <div class="audio-message" id="container_${audioId}" style="background: #1a1a1a; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 5px;">
-                            <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #000; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
-                            <audio id="${audioId}" src="${reader.result}"></audio>
-                            <div class="waveform" style="display: flex; gap: 3px; align-items: center;">${generateWaveBars()}</div>
-                            <span style="color:#fff; font-size: 12px;">${totalDuration}</span>
-                        </div>`,
-                    timestamp: Date.now()
-                });
-            };
             stream.getTracks().forEach(track => track.stop());
             audioContext.close();
         };
@@ -222,7 +230,7 @@ async function startRecording() {
 }
 
 trashBtn.onclick = () => {
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    if (mediaRecorder) {
         mediaRecorder.stop();
         audioChunks = [];
         msgInput.value = "";
@@ -232,15 +240,17 @@ trashBtn.onclick = () => {
 pauseBtn.onclick = () => {
     if (mediaRecorder.state === "recording") {
         mediaRecorder.pause();
+        lastPauseTime = Date.now();
         pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
     } else if (mediaRecorder.state === "paused") {
         mediaRecorder.resume();
+        elapsedPausedTime += (Date.now() - lastPauseTime);
         pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
     }
 };
 
 function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
         mediaRecorder.stop();
         actionBtn.classList.remove('active');
     }
@@ -249,7 +259,7 @@ function stopRecording() {
 actionBtn.addEventListener('click', () => {
     if (!iconSend.classList.contains('hidden') && !msgInput.value.includes('-')) {
         sendMessage();
-    } else if (mediaRecorder && mediaRecorder.state === "recording") {
+    } else if (mediaRecorder && mediaRecorder.state !== "inactive") {
         stopRecording();
     } else {
         startRecording();
