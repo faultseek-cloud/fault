@@ -336,7 +336,6 @@ input::-webkit-search-results-decoration {
     display: none;
 }
 
-/* BOTÃO CORRIGIDO PARA PRECISÃO DE CLIQUE */
 .action-btn {
     background: none;
     border: none;
@@ -433,4 +432,5 @@ input::-webkit-search-results-decoration {
     background: #444;
     height: 15px;
     border-radius: 2px;
+    transition: background 0.2s;
 }

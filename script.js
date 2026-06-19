@@ -33,18 +33,32 @@ let typingTimeout;
 let mediaRecorder;
 let audioChunks = [];
 let recordingStartTime;
+let recordingInterval;
 
 window.togglePlay = (id) => {
     const audio = document.getElementById(id);
     const btn = document.querySelector(`[data-play-btn="${id}"]`);
+    const container = document.getElementById('container_' + id);
+    const bars = container.querySelectorAll('.wave-bar');
+    
     if (audio.paused) {
         audio.play();
         btn.innerHTML = "❚❚";
+        
+        audio.ontimeupdate = () => {
+            const percent = (audio.currentTime / audio.duration) * 100;
+            bars.forEach((bar, index) => {
+                bar.style.background = (index / bars.length) * 100 <= percent ? '#fff' : '#444';
+            });
+        };
     } else {
         audio.pause();
         btn.innerHTML = "▶";
     }
-    audio.onended = () => { btn.innerHTML = "▶"; };
+    audio.onended = () => { 
+        btn.innerHTML = "▶"; 
+        bars.forEach(bar => bar.style.background = '#444');
+    };
 };
 
 function formatDuration(totalSeconds) {
@@ -91,14 +105,6 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
     if (messagesContainer.scrollTop > -100) messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
-messagesContainer.addEventListener('scroll', () => {
-    scrollBottomBtn.classList.toggle('hidden', messagesContainer.scrollTop > -300);
-});
-
-scrollBottomBtn.addEventListener('click', () => {
-    messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
 function sendMessage() {
     const text = msgInput.value.trim();
     if (text !== "" && window.userData) {
@@ -116,27 +122,6 @@ function sendMessage() {
     }
 }
 
-// Logica de click no botão centralizada
-actionBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (!iconSend.classList.contains('hidden')) {
-        sendMessage();
-    }
-});
-
-msgInput.addEventListener('input', () => {
-    if (!window.userData) return;
-    const hasText = msgInput.value.trim().length > 0;
-    iconMic.classList.toggle('hidden', hasText);
-    iconSend.classList.toggle('hidden', !hasText);
-    
-    set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => {
-        remove(ref(db, 'typing/' + window.userData.id));
-    }, 3000);
-});
-
 async function startRecording() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -144,10 +129,16 @@ async function startRecording() {
         audioChunks = [];
         recordingStartTime = Date.now();
         
+        recordingInterval = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+            msgInput.value = `${formatDuration(elapsed)} - 2:00`;
+            if (elapsed >= 120) stopRecording();
+        }, 1000);
+
         mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
         mediaRecorder.onstop = () => {
-            const totalSeconds = Math.round((Date.now() - recordingStartTime) / 1000);
-            const durationFormatted = formatDuration(totalSeconds);
+            clearInterval(recordingInterval);
+            msgInput.value = '';
             
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             const reader = new FileReader();
@@ -159,7 +150,7 @@ async function startRecording() {
                     avatar: window.userData.avatar,
                     userId: window.userData.id,
                     message: `
-                        <div class="audio-message" style="background: #1a1a1a; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 5px;">
+                        <div class="audio-message" id="container_${audioId}" style="background: #1a1a1a; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 5px;">
                             <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #000; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
                             <audio id="${audioId}" src="${reader.result}"></audio>
                             <div class="waveform" style="display: flex; gap: 3px; align-items: center;">
@@ -167,7 +158,6 @@ async function startRecording() {
                                 <div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>
                                 <div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>
                             </div>
-                            <span style="color: #666; font-size: 12px;">${durationFormatted}</span>
                         </div>`,
                     timestamp: Date.now()
                 });
@@ -186,16 +176,30 @@ function stopRecording() {
     }
 }
 
-// Eventos de gravação com controle de estado
-actionBtn.addEventListener('mousedown', () => { if (iconMic.classList.contains('hidden') === false) startRecording(); });
-actionBtn.addEventListener('mouseup', stopRecording);
-actionBtn.addEventListener('mouseleave', stopRecording);
-actionBtn.addEventListener('touchstart', (e) => { 
-    if (iconMic.classList.contains('hidden') === false) {
-        startRecording(); 
+actionBtn.addEventListener('click', (e) => {
+    if (!iconSend.classList.contains('hidden')) {
+        sendMessage();
+    } else {
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+            stopRecording();
+        } else {
+            startRecording();
+        }
     }
-}, {passive: false});
-actionBtn.addEventListener('touchend', stopRecording);
+});
+
+msgInput.addEventListener('input', () => {
+    if (!window.userData) return;
+    const hasText = msgInput.value.trim().length > 0;
+    iconMic.classList.toggle('hidden', hasText);
+    iconSend.classList.toggle('hidden', !hasText);
+    
+    set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        remove(ref(db, 'typing/' + window.userData.id));
+    }, 3000);
+});
 
 plusBtn.addEventListener('click', () => {
     const communityIcons = iconsContainer.querySelectorAll('.icon-item:not(#plusBtn)');
