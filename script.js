@@ -99,20 +99,6 @@ scrollBottomBtn.addEventListener('click', () => {
     messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
-msgInput.addEventListener('input', () => {
-    if (!window.userData) return;
-    const hasText = msgInput.value.trim().length > 0;
-    iconMic.classList.toggle('hidden', hasText);
-    iconSend.classList.toggle('hidden', !hasText);
-    iconSend.style.color = hasText ? '#fff' : '#444';
-
-    set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => {
-        remove(ref(db, 'typing/' + window.userData.id));
-    }, 3000);
-});
-
 function sendMessage() {
     const text = msgInput.value.trim();
     if (text !== "" && window.userData) {
@@ -126,16 +112,28 @@ function sendMessage() {
         msgInput.value = '';
         iconMic.classList.remove('hidden');
         iconSend.classList.add('hidden');
-        iconSend.style.color = '#444';
         remove(ref(db, 'typing/' + window.userData.id));
     }
 }
 
-// CORREÇÃO: Listener isolado para o ícone de envio
-iconSend.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    sendMessage();
+// Logica de click unificada para evitar erros
+actionBtn.addEventListener('click', (e) => {
+    if (!iconSend.classList.contains('hidden')) {
+        sendMessage();
+    }
+});
+
+msgInput.addEventListener('input', () => {
+    if (!window.userData) return;
+    const hasText = msgInput.value.trim().length > 0;
+    iconMic.classList.toggle('hidden', hasText);
+    iconSend.classList.toggle('hidden', !hasText);
+    
+    set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        remove(ref(db, 'typing/' + window.userData.id));
+    }, 3000);
 });
 
 async function startRecording() {
@@ -160,15 +158,15 @@ async function startRecording() {
                     avatar: window.userData.avatar,
                     userId: window.userData.id,
                     message: `
-                        <div class="audio-message" style="background: #5865F2; padding: 10px 15px; border-radius: 25px; display: flex; align-items: center; gap: 12px; width: fit-content; margin-top: 5px;">
-                            <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #5865F2; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
+                        <div class="audio-message" style="background: #1a1a1a; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 5px;">
+                            <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #000; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
                             <audio id="${audioId}" src="${reader.result}"></audio>
                             <div class="waveform" style="display: flex; gap: 3px; align-items: center;">
-                                <div class="wave-bar" style="width: 3px; height: 15px; background: rgba(255,255,255,0.6); border-radius: 2px;"></div>
-                                <div class="wave-bar" style="width: 3px; height: 25px; background: rgba(255,255,255,0.6); border-radius: 2px;"></div>
-                                <div class="wave-bar" style="width: 3px; height: 15px; background: rgba(255,255,255,0.6); border-radius: 2px;"></div>
+                                <div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>
+                                <div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>
+                                <div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>
                             </div>
-                            <span class="audio-duration" style="color: white; font-family: sans-serif; font-size: 13px;">${durationFormatted}</span>
+                            <span style="color: #666; font-size: 12px;">${durationFormatted}</span>
                         </div>`,
                     timestamp: Date.now()
                 });
@@ -187,10 +185,11 @@ function stopRecording() {
     }
 }
 
-actionBtn.addEventListener('mousedown', () => { if (msgInput.value.trim() === "") startRecording(); });
+// Proteção: so inicia gravação se o ícone de microfone estiver visível
+actionBtn.addEventListener('mousedown', () => { if (iconMic.classList.contains('hidden') === false) startRecording(); });
 actionBtn.addEventListener('mouseup', stopRecording);
 actionBtn.addEventListener('mouseleave', stopRecording);
-actionBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if (msgInput.value.trim() === "") startRecording(); });
+actionBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if (iconMic.classList.contains('hidden') === false) startRecording(); });
 actionBtn.addEventListener('touchend', stopRecording);
 
 plusBtn.addEventListener('click', () => {
