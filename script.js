@@ -27,8 +27,6 @@ const iconSend = document.getElementById('icon-send');
 const messagesContainer = document.getElementById('messages-container');
 const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
-const typingIndicator = document.getElementById('typing-indicator');
-const typingUsername = document.getElementById('typing-username');
 const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
 let typingTimeout;
@@ -38,14 +36,17 @@ let audioChunks = [];
 function openImageOverlay(src) {
     const overlay = document.createElement('div');
     overlay.className = 'image-overlay';
-    overlay.innerHTML = `
-        <div class="close-overlay-btn">×</div>
-        <img src="${src}">
-    `;
+    overlay.innerHTML = `<div class="close-overlay-btn">×</div><img src="${src}">`;
     overlay.querySelector('.close-overlay-btn').onclick = () => overlay.remove();
     overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
     document.body.appendChild(overlay);
 }
+
+window.togglePlay = (id) => {
+    const audio = document.getElementById(id);
+    if (audio.paused) audio.play();
+    else audio.pause();
+};
 
 onChildAdded(ref(db, 'messages'), (snapshot) => {
     const data = snapshot.val();
@@ -84,7 +85,6 @@ scrollBottomBtn.addEventListener('click', () => {
 
 msgInput.addEventListener('input', () => {
     if (!window.userData) return;
-    
     if (msgInput.value.trim().length > 0) {
         iconMic.classList.add('hidden');
         iconSend.classList.remove('hidden');
@@ -92,7 +92,6 @@ msgInput.addEventListener('input', () => {
         iconMic.classList.remove('hidden');
         iconSend.classList.add('hidden');
     }
-
     set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
@@ -114,7 +113,6 @@ function sendMessage() {
         iconMic.classList.remove('hidden');
         iconSend.classList.add('hidden');
         remove(ref(db, 'typing/' + window.userData.id));
-        messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
@@ -129,11 +127,22 @@ async function startRecording() {
             const reader = new FileReader();
             reader.readAsDataURL(audioBlob);
             reader.onloadend = () => {
+                const audioId = 'audio_' + Date.now();
                 push(ref(db, 'messages'), {
                     username: window.userData.username,
                     avatar: window.userData.avatar,
                     userId: window.userData.id,
-                    message: `<audio controls src="${reader.result}"></audio>`,
+                    message: `
+                        <div class="audio-message">
+                            <button class="play-btn" onclick="togglePlay('${audioId}')">▶</button>
+                            <audio id="${audioId}" src="${reader.result}"></audio>
+                            <div class="waveform">
+                                <div class="wave-bar"></div><div class="wave-bar" style="height:20px"></div>
+                                <div class="wave-bar"></div><div class="wave-bar" style="height:20px"></div>
+                                <div class="wave-bar"></div>
+                            </div>
+                            <span class="audio-duration">0:03</span>
+                        </div>`,
                     timestamp: Date.now()
                 });
             };
@@ -145,32 +154,11 @@ async function startRecording() {
     }
 }
 
-actionBtn.addEventListener('mousedown', () => {
-    if (msgInput.value.trim() === "") startRecording();
-});
-
-actionBtn.addEventListener('mouseup', () => {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-        mediaRecorder.stop();
-        actionBtn.classList.remove('active');
-    }
-});
-
-actionBtn.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    if (msgInput.value.trim() === "") startRecording();
-});
-
-actionBtn.addEventListener('touchend', () => {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-        mediaRecorder.stop();
-        actionBtn.classList.remove('active');
-    }
-});
-
-actionBtn.addEventListener('click', () => {
-    if (!iconSend.classList.contains('hidden')) sendMessage();
-});
+actionBtn.addEventListener('mousedown', () => { if (msgInput.value.trim() === "") startRecording(); });
+actionBtn.addEventListener('mouseup', () => { if (mediaRecorder && mediaRecorder.state === "recording") { mediaRecorder.stop(); actionBtn.classList.remove('active'); } });
+actionBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if (msgInput.value.trim() === "") startRecording(); });
+actionBtn.addEventListener('touchend', () => { if (mediaRecorder && mediaRecorder.state === "recording") { mediaRecorder.stop(); actionBtn.classList.remove('active'); } });
+actionBtn.addEventListener('click', () => { if (!iconSend.classList.contains('hidden')) sendMessage(); });
 
 plusBtn.addEventListener('click', () => {
     const communityIcons = iconsContainer.querySelectorAll('.icon-item:not(#plusBtn)');
@@ -184,7 +172,6 @@ plusBtn.addEventListener('click', () => {
 });
 
 addImgBtn.addEventListener('click', () => fileInput.click());
-
 fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file && window.userData) {
@@ -205,13 +192,10 @@ fileInput.addEventListener('change', (e) => {
 
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('access_token');
-
 if (token) {
     authScreen.classList.add('hidden');
     loadingScreen.classList.remove('hidden');
-    fetch('https://discord.com/api/users/@me', {
-        headers: { Authorization: `Bearer ${token}` }
-    })
+    fetch('https://discord.com/api/users/@me', { headers: { Authorization: `Bearer ${token}` } })
     .then(res => res.json())
     .then(user => {
         window.userData = user;
@@ -221,5 +205,4 @@ if (token) {
         window.history.replaceState({}, document.title, "/");
     });
 }
-
 msgInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });

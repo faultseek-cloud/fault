@@ -224,16 +224,6 @@ body {
     padding: 0 15px;
 }
 
-.msg-image {
-    width: 100%;
-    display: block;
-    margin-top: 8px;
-    cursor: pointer;
-    padding: 0;
-    margin-left: 0;
-    margin-right: 0;
-}
-
 .msg-header {
     display: flex;
     align-items: center;
@@ -246,11 +236,6 @@ body {
     border-radius: 50%;
     margin-right: 10px;
     object-fit: cover;
-}
-
-.msg-info {
-    display: flex;
-    flex-direction: column;
 }
 
 .msg-user {
@@ -326,11 +311,6 @@ footer {
     flex-shrink: 0;
 }
 
-.add-img-btn:active {
-    background: #1a1a1a;
-    color: #fff;
-}
-
 input {
     flex: 1;
     background: #0d0d0d;
@@ -343,17 +323,13 @@ input {
     -webkit-appearance: none;
 }
 
-input::-webkit-search-cancel-button {
-    display: none;
-}
-
 .action-btn {
     background: none;
     border: none;
     color: #444;
     cursor: pointer;
     padding: 10px;
-    transition: color 0.2s;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -401,10 +377,6 @@ input::-webkit-search-cancel-button {
     z-index: 1001;
 }
 
-.close-overlay-btn:active {
-    background: rgba(0, 0, 0, 0.8);
-}
-
 .audio-message {
     background: #1a1a1a;
     padding: 10px 15px;
@@ -412,7 +384,7 @@ input::-webkit-search-cancel-button {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 5px 15px;
+    margin: 5px 38px;
     width: fit-content;
     max-width: 70%;
 }
