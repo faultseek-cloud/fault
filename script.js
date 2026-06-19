@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, set, remove } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBX5mGILY9TT_M8S79X4UTRbHinH1PB6gI",
@@ -33,6 +33,12 @@ let typingTimeout;
 let mediaRecorder;
 let audioChunks = [];
 
+window.togglePlay = (id) => {
+    const audio = document.getElementById(id);
+    if (audio.paused) audio.play();
+    else audio.pause();
+};
+
 function openImageOverlay(src) {
     const overlay = document.createElement('div');
     overlay.className = 'image-overlay';
@@ -41,12 +47,6 @@ function openImageOverlay(src) {
     overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
     document.body.appendChild(overlay);
 }
-
-window.togglePlay = (id) => {
-    const audio = document.getElementById(id);
-    if (audio.paused) audio.play();
-    else audio.pause();
-};
 
 onChildAdded(ref(db, 'messages'), (snapshot) => {
     const data = snapshot.val();
@@ -85,13 +85,18 @@ scrollBottomBtn.addEventListener('click', () => {
 
 msgInput.addEventListener('input', () => {
     if (!window.userData) return;
-    if (msgInput.value.trim().length > 0) {
+    
+    const hasText = msgInput.value.trim().length > 0;
+    if (hasText) {
         iconMic.classList.add('hidden');
         iconSend.classList.remove('hidden');
+        iconSend.style.color = '#fff';
     } else {
         iconMic.classList.remove('hidden');
         iconSend.classList.add('hidden');
+        iconSend.style.color = '#444';
     }
+
     set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
@@ -112,7 +117,9 @@ function sendMessage() {
         msgInput.value = '';
         iconMic.classList.remove('hidden');
         iconSend.classList.add('hidden');
+        iconSend.style.color = '#444';
         remove(ref(db, 'typing/' + window.userData.id));
+        messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
@@ -132,26 +139,14 @@ async function startRecording() {
                     username: window.userData.username,
                     avatar: window.userData.avatar,
                     userId: window.userData.id,
-                    message: `
-                        <div class="audio-message">
-                            <button class="play-btn" onclick="togglePlay('${audioId}')">▶</button>
-                            <audio id="${audioId}" src="${reader.result}"></audio>
-                            <div class="waveform">
-                                <div class="wave-bar"></div><div class="wave-bar" style="height:20px"></div>
-                                <div class="wave-bar"></div><div class="wave-bar" style="height:20px"></div>
-                                <div class="wave-bar"></div>
-                            </div>
-                            <span class="audio-duration">0:03</span>
-                        </div>`,
+                    message: `<div class="audio-message"><button class="play-btn" onclick="togglePlay('${audioId}')">▶</button><audio id="${audioId}" src="${reader.result}"></audio><div class="waveform"><div class="wave-bar"></div><div class="wave-bar" style="height:20px"></div><div class="wave-bar"></div></div><span class="audio-duration">0:03</span></div>`,
                     timestamp: Date.now()
                 });
             };
         };
         mediaRecorder.start();
         actionBtn.classList.add('active');
-    } catch (err) {
-        alert("Permissão de microfone necessária.");
-    }
+    } catch (err) { alert("Permissão de microfone necessária."); }
 }
 
 actionBtn.addEventListener('mousedown', () => { if (msgInput.value.trim() === "") startRecording(); });
