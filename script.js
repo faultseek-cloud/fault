@@ -32,7 +32,8 @@ const typingUsername = document.getElementById('typing-username');
 const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
 let typingTimeout;
-let isRecording = false;
+let mediaRecorder;
+let audioChunks = [];
 
 function openImageOverlay(src) {
     const overlay = document.createElement('div');
@@ -117,30 +118,58 @@ function sendMessage() {
     }
 }
 
-// Lógica corrigida do botão de ação
-actionBtn.addEventListener('mousedown', (e) => {
-    if (msgInput.value.trim() === "") {
-        isRecording = true;
+async function startRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = () => {
+                push(ref(db, 'messages'), {
+                    username: window.userData.username,
+                    avatar: window.userData.avatar,
+                    userId: window.userData.id,
+                    message: `<audio controls src="${reader.result}"></audio>`,
+                    timestamp: Date.now()
+                });
+            };
+        };
+        mediaRecorder.start();
         actionBtn.classList.add('active');
-        console.log("Iniciando gravação...");
+    } catch (err) {
+        alert("Permissão de microfone necessária.");
     }
+}
+
+actionBtn.addEventListener('mousedown', () => {
+    if (msgInput.value.trim() === "") startRecording();
 });
 
 actionBtn.addEventListener('mouseup', () => {
-    if (isRecording) {
-        isRecording = false;
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
         actionBtn.classList.remove('active');
-        console.log("Gravação finalizada.");
     }
 });
 
-actionBtn.addEventListener('click', (e) => {
-    // Se o ícone de envio está visível, envia a mensagem
-    if (!iconSend.classList.contains('hidden')) {
-        sendMessage();
-    } else {
-        console.log("Modo microfone: pressione e segure para gravar.");
+actionBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (msgInput.value.trim() === "") startRecording();
+});
+
+actionBtn.addEventListener('touchend', () => {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        actionBtn.classList.remove('active');
     }
+});
+
+actionBtn.addEventListener('click', () => {
+    if (!iconSend.classList.contains('hidden')) sendMessage();
 });
 
 plusBtn.addEventListener('click', () => {
