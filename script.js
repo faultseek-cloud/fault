@@ -29,6 +29,17 @@ const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
 const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
+// Botões modernos criados via script
+const trashBtn = document.createElement('button');
+trashBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+trashBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #ff4d4d; margin-right: 10px;";
+addImgBtn.parentNode.insertBefore(trashBtn, addImgBtn.nextSibling);
+
+const pauseBtn = document.createElement('button');
+pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
+pauseBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #fff; margin-right: 10px;";
+trashBtn.parentNode.insertBefore(pauseBtn, trashBtn);
+
 let typingTimeout;
 let mediaRecorder;
 let audioChunks = [];
@@ -160,6 +171,8 @@ async function startRecording() {
         
         iconMic.classList.add('hidden');
         iconSend.classList.remove('hidden');
+        trashBtn.style.display = "block";
+        pauseBtn.style.display = "block";
         msgInput.value = "0:00 - 2:00";
         
         updateRecordingWaveform();
@@ -178,6 +191,8 @@ async function startRecording() {
             msgInput.value = '';
             iconMic.classList.remove('hidden');
             iconSend.classList.add('hidden');
+            trashBtn.style.display = "none";
+            pauseBtn.style.display = "none";
             
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             const reader = new FileReader();
@@ -205,6 +220,24 @@ async function startRecording() {
         actionBtn.classList.add('active');
     } catch (err) { alert("Permissão de microfone necessária."); }
 }
+
+trashBtn.onclick = () => {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+        audioChunks = [];
+        msgInput.value = "";
+    }
+};
+
+pauseBtn.onclick = () => {
+    if (mediaRecorder.state === "recording") {
+        mediaRecorder.pause();
+        pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
+    } else if (mediaRecorder.state === "paused") {
+        mediaRecorder.resume();
+        pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
+    }
+};
 
 function stopRecording() {
     if (mediaRecorder && mediaRecorder.state === "recording") {
@@ -275,7 +308,7 @@ if (token) {
     .then(res => res.json())
     .then(user => {
         window.userData = user;
-        loadingScreen.classList.add('hidden');
+        loadingScreen.classList.remove('hidden');
         mainScreen.classList.remove('hidden');
         sidebar.classList.remove('hidden');
         window.history.replaceState({}, document.title, "/");
