@@ -99,21 +99,6 @@ msgInput.addEventListener('input', () => {
     }, 3000);
 });
 
-onValue(ref(db, 'typing'), (snapshot) => {
-    const typingData = snapshot.val();
-    let isSomeoneTyping = false;
-    if (typingData) {
-        for (let userId in typingData) {
-            if (userId !== window.userData?.id) {
-                typingUsername.textContent = typingData[userId].username;
-                isSomeoneTyping = true;
-                break;
-            }
-        }
-    }
-    typingIndicator.style.display = isSomeoneTyping ? 'block' : 'none';
-});
-
 function sendMessage() {
     const text = msgInput.value.trim();
     if (text !== "" && window.userData) {
@@ -132,7 +117,8 @@ function sendMessage() {
     }
 }
 
-actionBtn.addEventListener('mousedown', () => {
+// Lógica corrigida do botão de ação
+actionBtn.addEventListener('mousedown', (e) => {
     if (msgInput.value.trim() === "") {
         isRecording = true;
         actionBtn.classList.add('active');
@@ -144,12 +130,17 @@ actionBtn.addEventListener('mouseup', () => {
     if (isRecording) {
         isRecording = false;
         actionBtn.classList.remove('active');
-        console.log("Áudio enviado!");
+        console.log("Gravação finalizada.");
     }
 });
 
-actionBtn.addEventListener('click', () => {
-    if (msgInput.value.trim().length > 0) sendMessage();
+actionBtn.addEventListener('click', (e) => {
+    // Se o ícone de envio está visível, envia a mensagem
+    if (!iconSend.classList.contains('hidden')) {
+        sendMessage();
+    } else {
+        console.log("Modo microfone: pressione e segure para gravar.");
+    }
 });
 
 plusBtn.addEventListener('click', () => {
