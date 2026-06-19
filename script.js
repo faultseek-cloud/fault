@@ -33,13 +33,18 @@ let typingTimeout;
 let mediaRecorder;
 let audioChunks = [];
 let recordingStartTime;
-let timerInterval;
 
 window.togglePlay = (id) => {
     const audio = document.getElementById(id);
     if (audio.paused) audio.play();
     else audio.pause();
 };
+
+function formatDuration(totalSeconds) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+}
 
 function openImageOverlay(src) {
     const overlay = document.createElement('div');
@@ -58,14 +63,13 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
     
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message';
-    // Estrutura organizada com container de conteúdo abaixo do header
     msgDiv.innerHTML = `
         <div class="msg-header">
             <img class="msg-avatar" src="https://cdn.discordapp.com/avatars/${data.userId}/${data.avatar}.png">
             <span class="msg-user">${data.username}</span>
             <span class="msg-time" style="font-size: 10px; color: #666; margin-left: 8px;">${dateStr} ${timeStr}</span>
         </div>
-        <div class="msg-content" style="display: flex; flex-direction: column; margin-top: 5px;">
+        <div class="msg-content" style="display: flex; flex-direction: column; margin-left: 38px; margin-top: 5px;">
             ${data.message}
         </div>
     `;
@@ -137,7 +141,9 @@ async function startRecording() {
         
         mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
         mediaRecorder.onstop = () => {
-            const duration = Math.round((Date.now() - recordingStartTime) / 1000);
+            const totalSeconds = Math.round((Date.now() - recordingStartTime) / 1000);
+            const durationFormatted = formatDuration(totalSeconds);
+            
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             const reader = new FileReader();
             reader.readAsDataURL(audioBlob);
@@ -156,21 +162,30 @@ async function startRecording() {
                                 <div class="wave-bar" style="width: 4px; height: 25px; background: #aaa;"></div>
                                 <div class="wave-bar" style="width: 4px; height: 15px; background: #aaa;"></div>
                             </div>
-                            <span class="audio-duration" style="color: #ccc; font-family: sans-serif;">0:0${duration}</span>
+                            <span class="audio-duration" style="color: #ccc; font-family: sans-serif;">${durationFormatted}</span>
                         </div>`,
                     timestamp: Date.now()
                 });
             };
+            stream.getTracks().forEach(track => track.stop());
         };
         mediaRecorder.start();
         actionBtn.classList.add('active');
     } catch (err) { alert("Permissão de microfone necessária."); }
 }
 
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        actionBtn.classList.remove('active');
+    }
+}
+
 actionBtn.addEventListener('mousedown', () => { if (msgInput.value.trim() === "") startRecording(); });
-actionBtn.addEventListener('mouseup', () => { if (mediaRecorder && mediaRecorder.state === "recording") { mediaRecorder.stop(); actionBtn.classList.remove('active'); } });
+actionBtn.addEventListener('mouseup', stopRecording);
+actionBtn.addEventListener('mouseleave', stopRecording);
 actionBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if (msgInput.value.trim() === "") startRecording(); });
-actionBtn.addEventListener('touchend', () => { if (mediaRecorder && mediaRecorder.state === "recording") { mediaRecorder.stop(); actionBtn.classList.remove('active'); } });
+actionBtn.addEventListener('touchend', stopRecording);
 actionBtn.addEventListener('click', () => { if (!iconSend.classList.contains('hidden')) sendMessage(); });
 
 plusBtn.addEventListener('click', () => {
