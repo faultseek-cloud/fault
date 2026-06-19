@@ -160,9 +160,8 @@ function sendMessage() {
             timestamp: Date.now()
         });
         msgInput.value = '';
-        iconMic.style.color = "#666";
-        iconMic.classList.remove('hidden');
-        iconSend.classList.add('hidden');
+        iconMic.style.display = "block";
+        iconSend.style.display = "none";
         remove(ref(db, 'typing/' + window.userData.id));
     }
 }
@@ -183,13 +182,13 @@ async function startRecording() {
         elapsedPausedTime = 0;
         isDiscarding = false;
         
-        iconMic.classList.add('hidden');
-        iconSend.classList.add('hidden');
+        iconMic.style.display = "none";
+        iconSend.style.display = "block";
+        iconSend.style.color = "#666";
         addImgBtn.style.display = "none";
         trashBtn.style.display = "block";
         pauseBtn.style.display = "block";
         msgInput.value = "0:00 - 2:00";
-        iconMic.style.color = "#666";
         
         updateRecordingWaveform();
         
@@ -230,9 +229,8 @@ async function startRecording() {
             }
             
             msgInput.value = '';
-            iconMic.style.color = "#666";
-            iconMic.classList.remove('hidden');
-            iconSend.classList.add('hidden');
+            iconMic.style.display = "block";
+            iconSend.style.display = "none";
             addImgBtn.style.display = "block";
             trashBtn.style.display = "none";
             pauseBtn.style.display = "none";
@@ -249,7 +247,6 @@ trashBtn.onclick = () => {
         isDiscarding = true;
         mediaRecorder.stop();
         audioChunks = [];
-        iconMic.style.color = "#666";
     }
 };
 
@@ -270,14 +267,11 @@ function stopRecording() {
         isDiscarding = false;
         mediaRecorder.stop();
         actionBtn.classList.remove('active');
-        iconMic.style.color = "#666";
     }
 }
 
 actionBtn.addEventListener('click', () => {
-    if (!iconSend.classList.contains('hidden') && !msgInput.value.includes('-')) {
-        sendMessage();
-    } else if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
         stopRecording();
     } else {
         startRecording();
@@ -285,11 +279,12 @@ actionBtn.addEventListener('click', () => {
 });
 
 msgInput.addEventListener('input', () => {
-    if (!window.userData) return;
+    if (!window.userData || (mediaRecorder && mediaRecorder.state !== "inactive")) return;
     const hasText = msgInput.value.trim().length > 0;
-    if (mediaRecorder && mediaRecorder.state !== "inactive") return;
-    iconMic.classList.toggle('hidden', hasText);
-    iconSend.classList.toggle('hidden', !hasText);
+    iconMic.style.display = hasText ? "none" : "block";
+    iconSend.style.display = hasText ? "block" : "none";
+    iconSend.style.color = hasText ? "#666" : "";
+    
     set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
