@@ -21,7 +21,9 @@ const authScreen = document.getElementById('auth-screen');
 const loadingScreen = document.getElementById('loading-screen');
 const sidebar = document.getElementById('sidebar');
 const msgInput = document.getElementById('msgInput');
-const sendBtn = document.getElementById('sendBtn');
+const actionBtn = document.getElementById('actionBtn');
+const iconMic = document.getElementById('icon-mic');
+const iconSend = document.getElementById('icon-send');
 const messagesContainer = document.getElementById('messages-container');
 const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
@@ -30,6 +32,7 @@ const typingUsername = document.getElementById('typing-username');
 const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
 let typingTimeout;
+let isRecording = false;
 
 function openImageOverlay(src) {
     const overlay = document.createElement('div');
@@ -38,10 +41,8 @@ function openImageOverlay(src) {
         <div class="close-overlay-btn">×</div>
         <img src="${src}">
     `;
-    
     overlay.querySelector('.close-overlay-btn').onclick = () => overlay.remove();
     overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
-    
     document.body.appendChild(overlay);
 }
 
@@ -57,9 +58,7 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
         <div class="msg-header">
             <img class="msg-avatar" src="https://cdn.discordapp.com/avatars/${data.userId}/${data.avatar}.png">
             <span class="msg-user">${data.username}</span>
-            <span class="msg-time" style="font-size: 10px; color: #666; margin-left: 8px;">
-                ${dateStr} ${timeStr}
-            </span>
+            <span class="msg-time" style="font-size: 10px; color: #666; margin-left: 8px;">${dateStr} ${timeStr}</span>
         </div>
         <div class="msg-text">${data.message}</div>
     `;
@@ -71,10 +70,7 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
     }
 
     messagesContainer.prepend(msgDiv);
-
-    if (messagesContainer.scrollTop > -100) {
-        messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    if (messagesContainer.scrollTop > -100) messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 messagesContainer.addEventListener('scroll', () => {
@@ -88,8 +84,15 @@ scrollBottomBtn.addEventListener('click', () => {
 msgInput.addEventListener('input', () => {
     if (!window.userData) return;
     
-    set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
+    if (msgInput.value.trim().length > 0) {
+        iconMic.classList.add('hidden');
+        iconSend.classList.remove('hidden');
+    } else {
+        iconMic.classList.remove('hidden');
+        iconSend.classList.add('hidden');
+    }
 
+    set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
         remove(ref(db, 'typing/' + window.userData.id));
@@ -99,7 +102,6 @@ msgInput.addEventListener('input', () => {
 onValue(ref(db, 'typing'), (snapshot) => {
     const typingData = snapshot.val();
     let isSomeoneTyping = false;
-    
     if (typingData) {
         for (let userId in typingData) {
             if (userId !== window.userData?.id) {
@@ -123,11 +125,32 @@ function sendMessage() {
             timestamp: Date.now()
         });
         msgInput.value = '';
-        sendBtn.classList.remove('active');
+        iconMic.classList.remove('hidden');
+        iconSend.classList.add('hidden');
         remove(ref(db, 'typing/' + window.userData.id));
         messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
+
+actionBtn.addEventListener('mousedown', () => {
+    if (msgInput.value.trim() === "") {
+        isRecording = true;
+        actionBtn.classList.add('active');
+        console.log("Iniciando gravação...");
+    }
+});
+
+actionBtn.addEventListener('mouseup', () => {
+    if (isRecording) {
+        isRecording = false;
+        actionBtn.classList.remove('active');
+        console.log("Áudio enviado!");
+    }
+});
+
+actionBtn.addEventListener('click', () => {
+    if (msgInput.value.trim().length > 0) sendMessage();
+});
 
 plusBtn.addEventListener('click', () => {
     const communityIcons = iconsContainer.querySelectorAll('.icon-item:not(#plusBtn)');
@@ -147,15 +170,13 @@ fileInput.addEventListener('change', (e) => {
     if (file && window.userData) {
         const reader = new FileReader();
         reader.onload = (event) => {
-            const text = `<img src="${event.target.result}" style="max-width: 200px; border-radius: 8px; margin-top: 5px; display: block;">`;
             push(ref(db, 'messages'), {
                 username: window.userData.username,
                 avatar: window.userData.avatar,
                 userId: window.userData.id,
-                message: text,
+                message: `<img src="${event.target.result}" style="max-width: 200px; border-radius: 8px; margin-top: 5px; display: block;">`,
                 timestamp: Date.now()
             });
-            messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
         };
         reader.readAsDataURL(file);
     }
@@ -181,6 +202,4 @@ if (token) {
     });
 }
 
-sendBtn.addEventListener('click', sendMessage);
 msgInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-msgInput.addEventListener('input', () => sendBtn.classList.toggle('active', msgInput.value.trim().length > 0));

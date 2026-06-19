@@ -347,7 +347,7 @@ input::-webkit-search-cancel-button {
     display: none;
 }
 
-.send-btn {
+.action-btn {
     background: none;
     border: none;
     color: #444;
@@ -359,7 +359,7 @@ input::-webkit-search-cancel-button {
     justify-content: center;
 }
 
-.send-btn.active {
+.action-btn.active {
     color: #fff;
 }
 
@@ -403,4 +403,42 @@ input::-webkit-search-cancel-button {
 
 .close-overlay-btn:active {
     background: rgba(0, 0, 0, 0.8);
+}
+
+.audio-message {
+    background: #1a1a1a;
+    padding: 10px 15px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 5px 15px;
+    width: fit-content;
+    max-width: 70%;
+}
+
+.play-btn {
+    background: #fff;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    border: none;
+    color: #000;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.waveform {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+}
+
+.wave-bar {
+    width: 3px;
+    background: #444;
+    height: 15px;
+    border-radius: 2px;
 }
