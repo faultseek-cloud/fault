@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, set, remove } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBX5mGILY9TT_M8S79X4UTRbHinH1PB6gI",
@@ -129,6 +129,10 @@ async function startRecording() {
         audioChunks = [];
         recordingStartTime = Date.now();
         
+        // Alterna ícones ao iniciar gravação
+        iconMic.classList.add('hidden');
+        iconSend.classList.remove('hidden');
+        
         recordingInterval = setInterval(() => {
             const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
             msgInput.value = `${formatDuration(elapsed)} - 2:00`;
@@ -139,6 +143,9 @@ async function startRecording() {
         mediaRecorder.onstop = () => {
             clearInterval(recordingInterval);
             msgInput.value = '';
+            // Retorna ícones ao parar
+            iconMic.classList.remove('hidden');
+            iconSend.classList.add('hidden');
             
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             const reader = new FileReader();
@@ -177,22 +184,28 @@ function stopRecording() {
 }
 
 actionBtn.addEventListener('click', (e) => {
-    if (!iconSend.classList.contains('hidden')) {
+    // Se há texto digitado, envia o texto
+    if (!iconSend.classList.contains('hidden') && msgInput.value.length > 0 && !msgInput.value.includes('- 2:00')) {
         sendMessage();
-    } else {
-        if (mediaRecorder && mediaRecorder.state === "recording") {
-            stopRecording();
-        } else {
-            startRecording();
-        }
+    } 
+    // Se está gravando, para a gravação
+    else if (mediaRecorder && mediaRecorder.state === "recording") {
+        stopRecording();
+    } 
+    // Se não há texto e não está gravando, inicia gravação
+    else {
+        startRecording();
     }
 });
 
 msgInput.addEventListener('input', () => {
     if (!window.userData) return;
-    const hasText = msgInput.value.trim().length > 0;
-    iconMic.classList.toggle('hidden', hasText);
-    iconSend.classList.toggle('hidden', !hasText);
+    // Só altera visual de ícone se não estiver em modo de gravação
+    if (!(mediaRecorder && mediaRecorder.state === "recording")) {
+        const hasText = msgInput.value.trim().length > 0;
+        iconMic.classList.toggle('hidden', hasText);
+        iconSend.classList.toggle('hidden', !hasText);
+    }
     
     set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
     clearTimeout(typingTimeout);
