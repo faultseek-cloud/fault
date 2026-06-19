@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, set, remove } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBX5mGILY9TT_M8S79X4UTRbHinH1PB6gI",
@@ -32,6 +32,8 @@ const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 let typingTimeout;
 let mediaRecorder;
 let audioChunks = [];
+let recordingStartTime;
+let timerInterval;
 
 window.togglePlay = (id) => {
     const audio = document.getElementById(id);
@@ -56,13 +58,16 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
     
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message';
+    // Estrutura organizada com container de conteúdo abaixo do header
     msgDiv.innerHTML = `
         <div class="msg-header">
             <img class="msg-avatar" src="https://cdn.discordapp.com/avatars/${data.userId}/${data.avatar}.png">
             <span class="msg-user">${data.username}</span>
             <span class="msg-time" style="font-size: 10px; color: #666; margin-left: 8px;">${dateStr} ${timeStr}</span>
         </div>
-        <div class="msg-text">${data.message}</div>
+        <div class="msg-content" style="display: flex; flex-direction: column; margin-top: 5px;">
+            ${data.message}
+        </div>
     `;
     
     const imgElement = msgDiv.querySelector('img[src^="data:image"]');
@@ -128,8 +133,11 @@ async function startRecording() {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
+        recordingStartTime = Date.now();
+        
         mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
         mediaRecorder.onstop = () => {
+            const duration = Math.round((Date.now() - recordingStartTime) / 1000);
             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             const reader = new FileReader();
             reader.readAsDataURL(audioBlob);
@@ -139,7 +147,17 @@ async function startRecording() {
                     username: window.userData.username,
                     avatar: window.userData.avatar,
                     userId: window.userData.id,
-                    message: `<div class="audio-message"><button class="play-btn" onclick="togglePlay('${audioId}')">▶</button><audio id="${audioId}" src="${reader.result}"></audio><div class="waveform"><div class="wave-bar"></div><div class="wave-bar" style="height:20px"></div><div class="wave-bar"></div></div><span class="audio-duration">0:03</span></div>`,
+                    message: `
+                        <div class="audio-message" style="display: flex; align-items: center; gap: 10px; background: #222; padding: 10px; border-radius: 20px; width: fit-content;">
+                            <button class="play-btn" onclick="togglePlay('${audioId}')" style="background: #5865F2; border: none; color: white; border-radius: 50%; width: 35px; height: 35px; cursor: pointer;">▶</button>
+                            <audio id="${audioId}" src="${reader.result}"></audio>
+                            <div class="waveform" style="display: flex; gap: 3px; align-items: center;">
+                                <div class="wave-bar" style="width: 4px; height: 15px; background: #aaa;"></div>
+                                <div class="wave-bar" style="width: 4px; height: 25px; background: #aaa;"></div>
+                                <div class="wave-bar" style="width: 4px; height: 15px; background: #aaa;"></div>
+                            </div>
+                            <span class="audio-duration" style="color: #ccc; font-family: sans-serif;">0:0${duration}</span>
+                        </div>`,
                     timestamp: Date.now()
                 });
             };

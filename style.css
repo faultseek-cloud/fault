@@ -249,9 +249,15 @@ body {
     color: #666;
 }
 
+.msg-content {
+    display: flex;
+    flex-direction: column;
+    margin-left: 38px;
+    margin-top: 2px;
+}
+
 .msg-text {
     font-size: 14px;
-    margin-left: 38px;
     line-height: 1.4;
     word-wrap: break-word;
 }
@@ -384,9 +390,9 @@ input {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 5px 38px;
     width: fit-content;
-    max-width: 70%;
+    max-width: 250px;
+    margin-top: 5px;
 }
 
 .play-btn {
