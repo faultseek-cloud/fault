@@ -39,6 +39,14 @@ let analyser;
 let dataArray;
 let animationId;
 
+function generateWaveBars(count = 20) {
+    let bars = "";
+    for (let i = 0; i < count; i++) {
+        bars += `<div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>`;
+    }
+    return bars;
+}
+
 window.togglePlay = (id) => {
     const audio = document.getElementById(id);
     const btn = document.querySelector(`[data-play-btn="${id}"]`);
@@ -71,11 +79,12 @@ function formatDuration(totalSeconds) {
 }
 
 function updateRecordingWaveform() {
+    if (!analyser) return;
     analyser.getByteFrequencyData(dataArray);
     const bars = document.querySelectorAll('.recording-wave-bar');
     bars.forEach((bar, i) => {
-        const height = (dataArray[i] / 255) * 40;
-        bar.style.height = `${Math.max(5, height)}px`;
+        const height = Math.max(5, (dataArray[i] / 255) * 40);
+        bar.style.height = `${height}px`;
     });
     animationId = requestAnimationFrame(updateRecordingWaveform);
 }
@@ -183,11 +192,7 @@ async function startRecording() {
                         <div class="audio-message" id="container_${audioId}" style="background: #1a1a1a; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 5px;">
                             <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #000; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
                             <audio id="${audioId}" src="${reader.result}"></audio>
-                            <div class="waveform" style="display: flex; gap: 3px; align-items: center;">
-                                <div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>
-                                <div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>
-                                <div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>
-                            </div>
+                            <div class="waveform" style="display: flex; gap: 3px; align-items: center;">${generateWaveBars()}</div>
                             <span style="color:#fff; font-size: 12px;">${totalDuration}</span>
                         </div>`,
                     timestamp: Date.now()
