@@ -317,6 +317,7 @@ footer {
     flex-shrink: 0;
 }
 
+/* INPUT CORRIGIDO PARA REMOVER O "X" */
 input {
     flex: 1;
     background: #0d0d0d;
@@ -327,6 +328,13 @@ input {
     padding: 12px 15px;
     border-radius: 8px;
     -webkit-appearance: none;
+}
+
+input::-webkit-search-decoration,
+input::-webkit-search-cancel-button,
+input::-webkit-search-results-button,
+input::-webkit-search-results-decoration {
+    display: none;
 }
 
 .action-btn {

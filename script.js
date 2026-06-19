@@ -120,15 +120,23 @@ function sendMessage() {
             username: window.userData.username,
             avatar: window.userData.avatar,
             userId: window.userData.id,
-            message: text,
+            message: `<div class="msg-text">${text}</div>`,
             timestamp: Date.now()
         });
         msgInput.value = '';
         iconMic.classList.remove('hidden');
         iconSend.classList.add('hidden');
+        iconSend.style.color = '#444';
         remove(ref(db, 'typing/' + window.userData.id));
     }
 }
+
+// CORREÇÃO: Listener isolado para o ícone de envio
+iconSend.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    sendMessage();
+});
 
 async function startRecording() {
     try {
@@ -184,7 +192,6 @@ actionBtn.addEventListener('mouseup', stopRecording);
 actionBtn.addEventListener('mouseleave', stopRecording);
 actionBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if (msgInput.value.trim() === "") startRecording(); });
 actionBtn.addEventListener('touchend', stopRecording);
-actionBtn.addEventListener('click', () => { if (!iconSend.classList.contains('hidden')) sendMessage(); });
 
 plusBtn.addEventListener('click', () => {
     const communityIcons = iconsContainer.querySelectorAll('.icon-item:not(#plusBtn)');
