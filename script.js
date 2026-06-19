@@ -50,6 +50,7 @@ let dataArray;
 let animationId;
 let elapsedPausedTime = 0;
 let lastPauseTime = 0;
+let isDiscarding = false;
 
 function generateWaveBars(count = 20) {
     let bars = "";
@@ -170,6 +171,7 @@ async function startRecording() {
         audioChunks = [];
         recordingStartTime = Date.now();
         elapsedPausedTime = 0;
+        isDiscarding = false;
         
         iconMic.classList.add('hidden');
         iconSend.classList.add('hidden');
@@ -192,9 +194,9 @@ async function startRecording() {
         mediaRecorder.onstop = () => {
             clearInterval(recordingInterval);
             cancelAnimationFrame(animationId);
-            const totalDuration = formatDuration(Math.floor((Date.now() - recordingStartTime - elapsedPausedTime) / 1000));
             
-            if (audioChunks.length > 0) {
+            if (!isDiscarding && audioChunks.length > 0) {
+                const totalDuration = formatDuration(Math.floor((Date.now() - recordingStartTime - elapsedPausedTime) / 1000));
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 const reader = new FileReader();
                 reader.readAsDataURL(audioBlob);
@@ -231,9 +233,9 @@ async function startRecording() {
 
 trashBtn.onclick = () => {
     if (mediaRecorder) {
+        isDiscarding = true;
         mediaRecorder.stop();
         audioChunks = [];
-        msgInput.value = "";
     }
 };
 
@@ -251,6 +253,7 @@ pauseBtn.onclick = () => {
 
 function stopRecording() {
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        isDiscarding = false;
         mediaRecorder.stop();
         actionBtn.classList.remove('active');
     }
@@ -267,7 +270,7 @@ actionBtn.addEventListener('click', () => {
 });
 
 msgInput.addEventListener('input', () => {
-    if (!window.userData || (mediaRecorder && mediaRecorder.state === "recording")) return;
+    if (!window.userData || (mediaRecorder && mediaRecorder.state !== "inactive")) return;
     const hasText = msgInput.value.trim().length > 0;
     iconMic.classList.toggle('hidden', hasText);
     iconSend.classList.toggle('hidden', !hasText);
