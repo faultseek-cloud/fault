@@ -317,7 +317,6 @@ footer {
     flex-shrink: 0;
 }
 
-/* INPUT CORRIGIDO PARA REMOVER O "X" */
 input {
     flex: 1;
     background: #0d0d0d;
@@ -337,16 +336,23 @@ input::-webkit-search-results-decoration {
     display: none;
 }
 
+/* BOTÃO CORRIGIDO PARA PRECISÃO DE CLIQUE */
 .action-btn {
     background: none;
     border: none;
     color: #444;
     cursor: pointer;
-    padding: 10px;
-    transition: all 0.2s;
+    width: 45px;
+    height: 45px;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.action-btn svg {
+    pointer-events: none;
 }
 
 .action-btn.active {

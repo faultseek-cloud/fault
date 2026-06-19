@@ -116,8 +116,9 @@ function sendMessage() {
     }
 }
 
-// Logica de click unificada para evitar erros
+// Logica de click no botão centralizada
 actionBtn.addEventListener('click', (e) => {
+    e.preventDefault();
     if (!iconSend.classList.contains('hidden')) {
         sendMessage();
     }
@@ -185,11 +186,15 @@ function stopRecording() {
     }
 }
 
-// Proteção: so inicia gravação se o ícone de microfone estiver visível
+// Eventos de gravação com controle de estado
 actionBtn.addEventListener('mousedown', () => { if (iconMic.classList.contains('hidden') === false) startRecording(); });
 actionBtn.addEventListener('mouseup', stopRecording);
 actionBtn.addEventListener('mouseleave', stopRecording);
-actionBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if (iconMic.classList.contains('hidden') === false) startRecording(); });
+actionBtn.addEventListener('touchstart', (e) => { 
+    if (iconMic.classList.contains('hidden') === false) {
+        startRecording(); 
+    }
+}, {passive: false});
 actionBtn.addEventListener('touchend', stopRecording);
 
 plusBtn.addEventListener('click', () => {
