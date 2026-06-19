@@ -34,6 +34,10 @@ let mediaRecorder;
 let audioChunks = [];
 let recordingStartTime;
 let recordingInterval;
+let audioContext;
+let analyser;
+let dataArray;
+let animationId;
 
 window.togglePlay = (id) => {
     const audio = document.getElementById(id);
@@ -44,7 +48,6 @@ window.togglePlay = (id) => {
     if (audio.paused) {
         audio.play();
         btn.innerHTML = "❚❚";
-        
         audio.ontimeupdate = () => {
             const percent = (audio.currentTime / audio.duration) * 100;
             bars.forEach((bar, index) => {
@@ -65,6 +68,16 @@ function formatDuration(totalSeconds) {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+}
+
+function updateRecordingWaveform() {
+    analyser.getByteFrequencyData(dataArray);
+    const bars = document.querySelectorAll('.recording-wave-bar');
+    bars.forEach((bar, i) => {
+        const height = (dataArray[i] / 255) * 40;
+        bar.style.height = `${Math.max(5, height)}px`;
+    });
+    animationId = requestAnimationFrame(updateRecordingWaveform);
 }
 
 function openImageOverlay(src) {
@@ -125,13 +138,22 @@ function sendMessage() {
 async function startRecording() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+        analyser.fftSize = 32;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
         recordingStartTime = Date.now();
         
-        // Alterna ícones ao iniciar gravação
         iconMic.classList.add('hidden');
         iconSend.classList.remove('hidden');
+        msgInput.value = "0:00 - 2:00";
+        
+        updateRecordingWaveform();
         
         recordingInterval = setInterval(() => {
             const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
@@ -142,8 +164,9 @@ async function startRecording() {
         mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
         mediaRecorder.onstop = () => {
             clearInterval(recordingInterval);
+            cancelAnimationFrame(animationId);
+            const totalDuration = formatDuration(Math.floor((Date.now() - recordingStartTime) / 1000));
             msgInput.value = '';
-            // Retorna ícones ao parar
             iconMic.classList.remove('hidden');
             iconSend.classList.add('hidden');
             
@@ -165,11 +188,13 @@ async function startRecording() {
                                 <div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>
                                 <div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>
                             </div>
+                            <span style="color:#fff; font-size: 12px;">${totalDuration}</span>
                         </div>`,
                     timestamp: Date.now()
                 });
             };
             stream.getTracks().forEach(track => track.stop());
+            audioContext.close();
         };
         mediaRecorder.start();
         actionBtn.classList.add('active');
@@ -183,29 +208,21 @@ function stopRecording() {
     }
 }
 
-actionBtn.addEventListener('click', (e) => {
-    // Se há texto digitado, envia o texto
-    if (!iconSend.classList.contains('hidden') && msgInput.value.length > 0 && !msgInput.value.includes('- 2:00')) {
+actionBtn.addEventListener('click', () => {
+    if (!iconSend.classList.contains('hidden') && !msgInput.value.includes('-')) {
         sendMessage();
-    } 
-    // Se está gravando, para a gravação
-    else if (mediaRecorder && mediaRecorder.state === "recording") {
+    } else if (mediaRecorder && mediaRecorder.state === "recording") {
         stopRecording();
-    } 
-    // Se não há texto e não está gravando, inicia gravação
-    else {
+    } else {
         startRecording();
     }
 });
 
 msgInput.addEventListener('input', () => {
-    if (!window.userData) return;
-    // Só altera visual de ícone se não estiver em modo de gravação
-    if (!(mediaRecorder && mediaRecorder.state === "recording")) {
-        const hasText = msgInput.value.trim().length > 0;
-        iconMic.classList.toggle('hidden', hasText);
-        iconSend.classList.toggle('hidden', !hasText);
-    }
+    if (!window.userData || (mediaRecorder && mediaRecorder.state === "recording")) return;
+    const hasText = msgInput.value.trim().length > 0;
+    iconMic.classList.toggle('hidden', hasText);
+    iconSend.classList.toggle('hidden', !hasText);
     
     set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
     clearTimeout(typingTimeout);
