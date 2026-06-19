@@ -105,27 +105,9 @@ function updateRecordingWaveform() {
 function openImageOverlay(src) {
     const overlay = document.createElement('div');
     overlay.className = 'image-overlay';
-    overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000;";
-    
-    const closeBtn = document.createElement('div');
-    closeBtn.innerHTML = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-    closeBtn.style.cssText = "position: absolute; top: 20px; right: 20px; cursor: pointer; background: rgba(255,255,255,0.2); border-radius: 50%; padding: 5px;";
-    
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.cssText = "max-width: 90%; max-height: 90%; cursor: pointer;";
-    
-    let isVisible = true;
-    img.onclick = () => {
-        isVisible = !isVisible;
-        closeBtn.style.display = isVisible ? 'block' : 'none';
-    };
-    
-    closeBtn.onclick = () => overlay.remove();
+    overlay.innerHTML = `<div class="close-overlay-btn">×</div><img src="${src}">`;
+    overlay.querySelector('.close-overlay-btn').onclick = () => overlay.remove();
     overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
-    
-    overlay.appendChild(closeBtn);
-    overlay.appendChild(img);
     document.body.appendChild(overlay);
 }
 
@@ -193,12 +175,12 @@ async function startRecording() {
         isDiscarding = false;
         
         iconMic.classList.add('hidden');
-        iconSend.classList.remove('hidden');
-        iconSend.style.color = "#666";
+        iconSend.classList.add('hidden');
         addImgBtn.style.display = "none";
         trashBtn.style.display = "block";
         pauseBtn.style.display = "block";
         msgInput.value = "0:00 - 2:00";
+        iconMic.style.color = "#666";
         
         updateRecordingWaveform();
         
@@ -239,9 +221,9 @@ async function startRecording() {
             }
             
             msgInput.value = '';
+            iconMic.style.color = "#666";
             iconMic.classList.remove('hidden');
             iconSend.classList.add('hidden');
-            iconSend.style.color = "";
             addImgBtn.style.display = "block";
             trashBtn.style.display = "none";
             pauseBtn.style.display = "none";
@@ -258,6 +240,7 @@ trashBtn.onclick = () => {
         isDiscarding = true;
         mediaRecorder.stop();
         audioChunks = [];
+        iconMic.style.color = "#666";
     }
 };
 
@@ -278,6 +261,7 @@ function stopRecording() {
         isDiscarding = false;
         mediaRecorder.stop();
         actionBtn.classList.remove('active');
+        iconMic.style.color = "#666";
     }
 }
 
@@ -292,8 +276,11 @@ actionBtn.addEventListener('click', () => {
 });
 
 msgInput.addEventListener('input', () => {
-    if (!window.userData || (mediaRecorder && mediaRecorder.state !== "inactive")) return;
+    if (!window.userData) return;
     const hasText = msgInput.value.trim().length > 0;
+    
+    if (mediaRecorder && mediaRecorder.state !== "inactive") return;
+    
     iconMic.classList.toggle('hidden', hasText);
     iconSend.classList.toggle('hidden', !hasText);
     
