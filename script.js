@@ -27,6 +27,11 @@ const iconSend = document.getElementById('icon-send');
 const messagesContainer = document.getElementById('messages-container');
 const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
+const chatIcon = document.getElementById('chat-icon-element');
+
+if (chatIcon) {
+    chatIcon.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
+}
 
 fileInput.setAttribute("accept", "image/*,video/*");
 
@@ -139,8 +144,8 @@ window.toggleMute = (btn) => {
     const video = btn.parentElement.querySelector('video');
     video.muted = !video.muted;
     btn.innerHTML = video.muted ? 
-    `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27l7.73 7.73H3v6h4l5 5v-6.73l4.25 4.25c-.67.48-1.42.84-2.25 1.03v2.06c1.38-.27 2.63-.87 3.66-1.72l1.66 1.66L21 19.73 4.27 3z"/></svg>` : 
-    `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>`;
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>` : 
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
 };
 
 onChildAdded(ref(db, 'messages'), (snapshot) => {
@@ -330,8 +335,8 @@ fileInput.addEventListener('change', (e) => {
                     <div onclick="toggleVideoPlay(this.previousElementSibling)" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; pointer-events:none; transition:0.3s;">
                         <svg width="50" height="50" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
                     </div>
-                    <div class="mute-btn" onclick="toggleMute(this)" style="position:absolute; top:10px; right:10px; width:30px; height:30px; background:rgba(0,0,0,0.5); border-radius:50%; display:none; align-items:center; justify-content:center; cursor:pointer;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                    <div class="mute-btn" onclick="toggleMute(this)" style="position:absolute; bottom:10px; left:10px; width:30px; height:30px; background:rgba(0,0,0,0.5); border-radius:50%; display:none; align-items:center; justify-content:center; cursor:pointer;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
                     </div>
                 </div>`;
             }
