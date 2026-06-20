@@ -43,6 +43,9 @@ pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none
 pauseBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #fff; margin-right: 10px;";
 addImgBtn.parentNode.insertBefore(pauseBtn, trashBtn);
 
+iconSend.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
+iconSend.style.display = "none";
+
 let typingTimeout;
 let mediaRecorder;
 let audioChunks = [];
@@ -55,6 +58,19 @@ let animationId;
 let elapsedPausedTime = 0;
 let lastPauseTime = 0;
 let isDiscarding = false;
+
+function updateVisibility() {
+    const isRecording = mediaRecorder && mediaRecorder.state !== "inactive";
+    const hasText = msgInput.value.trim().length > 0;
+    
+    if (isRecording) {
+        iconMic.style.display = "none";
+        iconSend.style.display = "block";
+    } else {
+        iconMic.style.display = hasText ? "none" : "block";
+        iconSend.style.display = hasText ? "block" : "none";
+    }
+}
 
 function generateWaveBars() {
     let bars = "";
@@ -186,8 +202,7 @@ function sendMessage() {
             timestamp: Date.now()
         });
         msgInput.value = '';
-        iconMic.style.display = "block";
-        iconSend.style.display = "none";
+        updateVisibility();
         remove(ref(db, 'typing/' + window.userData.id));
     }
 }
@@ -208,12 +223,11 @@ async function startRecording() {
         elapsedPausedTime = 0;
         isDiscarding = false;
         
-        iconMic.style.display = "none";
-        iconSend.style.display = "none";
         addImgBtn.style.display = "none";
         trashBtn.style.display = "block";
         pauseBtn.style.display = "block";
         msgInput.value = "0:00 - 2:00";
+        updateVisibility();
         
         updateRecordingWaveform();
         
@@ -254,11 +268,10 @@ async function startRecording() {
             }
             
             msgInput.value = '';
-            iconMic.style.display = "block";
-            iconSend.style.display = "none";
             addImgBtn.style.display = "block";
             trashBtn.style.display = "none";
             pauseBtn.style.display = "none";
+            updateVisibility();
             stream.getTracks().forEach(track => track.stop());
             audioContext.close();
         };
@@ -295,26 +308,19 @@ function stopRecording() {
     }
 }
 
-actionBtn.addEventListener('click', () => {
+iconMic.addEventListener('click', startRecording);
+
+iconSend.addEventListener('click', () => {
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
         stopRecording();
     } else {
-        startRecording();
+        sendMessage();
     }
 });
 
-iconMic.addEventListener('click', () => {
-    iconMic.style.display = "none";
-    iconSend.style.display = "block";
-    iconSend.style.fill = "#808080";
-});
-
 msgInput.addEventListener('input', () => {
-    if (!window.userData || (mediaRecorder && mediaRecorder.state !== "inactive")) return;
-    const hasText = msgInput.value.trim().length > 0;
-    iconMic.style.display = hasText ? "none" : "block";
-    iconSend.style.display = hasText ? "block" : "none";
-    iconSend.style.fill = hasText ? "currentColor" : "#808080";
+    if (!window.userData) return;
+    updateVisibility();
     set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
@@ -374,3 +380,4 @@ if (token) {
     });
 }
 msgInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+updateVisibility();
