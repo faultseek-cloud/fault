@@ -274,21 +274,27 @@ footer {
 
 .scroll-bottom-btn {
     position: absolute;
-    top: -45px;
-    right: 15px;
+    bottom: 80px;
+    right: 20px;
     background: #1a1a1a;
     border: 1px solid #333;
     color: #fff;
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    z-index: 10;
-    transition: opacity 0.3s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    z-index: 100;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.scroll-bottom-btn.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
 }
 
 .footer-wrapper {

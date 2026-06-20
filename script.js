@@ -111,6 +111,18 @@ function openImageOverlay(src) {
     document.body.appendChild(overlay);
 }
 
+messagesContainer.addEventListener('scroll', () => {
+    if (messagesContainer.scrollTop < -200) {
+        scrollBottomBtn.classList.remove('hidden');
+    } else {
+        scrollBottomBtn.classList.add('hidden');
+    }
+});
+
+scrollBottomBtn.addEventListener('click', () => {
+    messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
 onChildAdded(ref(db, 'messages'), (snapshot) => {
     const data = snapshot.val();
     const date = new Date(data.timestamp);
