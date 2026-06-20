@@ -105,23 +105,27 @@ function updateRecordingWaveform() {
 function openImageOverlay(src) {
     const overlay = document.createElement('div');
     overlay.className = 'image-overlay';
-    overlay.innerHTML = `<div class="close-overlay-btn">×</div><img src="${src}">`;
-    overlay.querySelector('.close-overlay-btn').onclick = () => overlay.remove();
+    
+    const closeBtn = document.createElement('div');
+    closeBtn.className = 'close-overlay-btn';
+    closeBtn.innerText = '×';
+    
+    const img = document.createElement('img');
+    img.src = src;
+    
+    overlay.appendChild(closeBtn);
+    overlay.appendChild(img);
+    
+    img.onclick = (e) => {
+        e.stopPropagation();
+        closeBtn.style.display = (closeBtn.style.display === 'none') ? 'flex' : 'none';
+    };
+    
+    closeBtn.onclick = () => overlay.remove();
     overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+    
     document.body.appendChild(overlay);
 }
-
-messagesContainer.addEventListener('scroll', () => {
-    if (messagesContainer.scrollTop < -200) {
-        scrollBottomBtn.classList.remove('hidden');
-    } else {
-        scrollBottomBtn.classList.add('hidden');
-    }
-});
-
-scrollBottomBtn.addEventListener('click', () => {
-    messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
-});
 
 onChildAdded(ref(db, 'messages'), (snapshot) => {
     const data = snapshot.val();
@@ -135,9 +139,9 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
         <div class="msg-header">
             <img class="msg-avatar" src="https://cdn.discordapp.com/avatars/${data.userId}/${data.avatar}.png">
             <span class="msg-user">${data.username}</span>
-            <span class="msg-time">${dateStr} ${timeStr}</span>
+            <span class="msg-time" style="font-size: 10px; color: #666; margin-left: 8px;">${dateStr} ${timeStr}</span>
         </div>
-        <div class="msg-content">
+        <div class="msg-content" style="display: flex; flex-direction: column; margin-left: 38px; margin-top: 5px;">
             ${data.message}
         </div>
     `;
@@ -221,10 +225,10 @@ async function startRecording() {
                         avatar: window.userData.avatar,
                         userId: window.userData.id,
                         message: `
-                            <div class="audio-message" id="container_${audioId}">
-                                <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')">▶</button>
+                            <div class="audio-message" id="container_${audioId}" style="background: #1a1a1a; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 5px;">
+                                <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #000; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
                                 <audio id="${audioId}" src="${reader.result}"></audio>
-                                <div class="waveform">${generateWaveBars()}</div>
+                                <div class="waveform" style="display: flex; gap: 3px; align-items: center;">${generateWaveBars()}</div>
                                 <span style="color:#fff; font-size: 12px;">${totalDuration}</span>
                             </div>`,
                         timestamp: Date.now()
