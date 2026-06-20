@@ -274,27 +274,21 @@ footer {
 
 .scroll-bottom-btn {
     position: absolute;
-    bottom: 80px;
-    right: 20px;
+    top: -45px;
+    right: 15px;
     background: #1a1a1a;
     border: 1px solid #333;
     color: #fff;
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    z-index: 100;
-    transition: opacity 0.3s, transform 0.3s;
-}
-
-.scroll-bottom-btn.hidden {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(10px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    z-index: 10;
+    transition: opacity 0.3s;
 }
 
 .footer-wrapper {
@@ -335,11 +329,21 @@ input {
     -webkit-appearance: none;
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px #0d0d0d inset !important;
+    -webkit-text-fill-color: #fff !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
 input::-webkit-search-decoration,
 input::-webkit-search-cancel-button,
 input::-webkit-search-results-button,
-input::-webkit-search-results-decoration {
-    display: none;
+input::-webkit-search-results-decoration,
+input::-webkit-contacts-auto-fill-button {
+    display: none !important;
+    visibility: hidden;
 }
 
 .action-btn {
