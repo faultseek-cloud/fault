@@ -122,6 +122,17 @@ function openImageOverlay(src) {
     document.body.appendChild(overlay);
 }
 
+window.toggleVideoPlay = (video) => {
+    const btn = video.nextElementSibling;
+    if (video.paused) {
+        video.play();
+        btn.style.opacity = "0";
+    } else {
+        video.pause();
+        btn.style.opacity = "1";
+    }
+};
+
 onChildAdded(ref(db, 'messages'), (snapshot) => {
     const data = snapshot.val();
     const date = new Date(data.timestamp);
@@ -303,7 +314,13 @@ fileInput.addEventListener('change', (e) => {
             if (file.type.startsWith('image/')) {
                 messageContent = `<img src="${event.target.result}" style="max-width: 200px; border-radius: 8px; margin-top: 5px; display: block;">`;
             } else if (file.type.startsWith('video/')) {
-                messageContent = `<video src="${event.target.result}" controls style="max-width: 250px; border-radius: 8px; margin-top: 5px; display: block;"></video>`;
+                messageContent = `
+                <div style="position:relative; width:250px; cursor:pointer;">
+                    <video src="${event.target.result}" style="width:100%; border-radius:8px; display:block;" onclick="toggleVideoPlay(this)"></video>
+                    <div onclick="toggleVideoPlay(this.previousElementSibling)" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; pointer-events:none; transition:0.3s;">
+                        <svg width="50" height="50" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                </div>`;
             }
             if (messageContent) {
                 push(ref(db, 'messages'), {
