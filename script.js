@@ -142,8 +142,8 @@ window.toggleMute = (btn) => {
     const video = btn.parentElement.querySelector('video');
     video.muted = !video.muted;
     btn.innerHTML = video.muted ? 
-    `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27l7.73 7.73H3v6h4l5 5v-6.73l4.25 4.25c-.67.48-1.42.84-2.25 1.03v2.06c1.38-.27 2.63-.87 3.66-1.72l1.66 1.66L21 19.73 4.27 3z"/></svg>` : 
-    `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>`;
+    `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>` : 
+    `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
 };
 
 onChildAdded(ref(db, 'messages'), (snapshot) => {
@@ -209,8 +209,7 @@ async function startRecording() {
         isDiscarding = false;
         
         iconMic.style.display = "none";
-        iconSend.style.display = "block";
-        iconSend.style.color = "#808080";
+        iconSend.style.display = "none";
         addImgBtn.style.display = "none";
         trashBtn.style.display = "block";
         pauseBtn.style.display = "block";
@@ -307,7 +306,7 @@ actionBtn.addEventListener('click', () => {
 iconMic.addEventListener('click', () => {
     iconMic.style.display = "none";
     iconSend.style.display = "block";
-    iconSend.style.color = "#808080";
+    iconSend.style.fill = "#808080";
 });
 
 msgInput.addEventListener('input', () => {
@@ -315,7 +314,7 @@ msgInput.addEventListener('input', () => {
     const hasText = msgInput.value.trim().length > 0;
     iconMic.style.display = hasText ? "none" : "block";
     iconSend.style.display = hasText ? "block" : "none";
-    iconSend.style.color = hasText ? "" : "#808080";
+    iconSend.style.fill = hasText ? "currentColor" : "#808080";
     set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
@@ -340,7 +339,7 @@ fileInput.addEventListener('change', (e) => {
                         <svg width="50" height="50" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
                     </div>
                     <div class="mute-btn" onclick="toggleMute(this)" style="position:absolute; bottom:10px; left:10px; width:30px; height:30px; background:rgba(0,0,0,0.5); border-radius:50%; display:none; align-items:center; justify-content:center; cursor:pointer;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27l7.73 7.73H3v6h4l5 5v-6.73l4.25 4.25c-.67.48-1.42.84-2.25 1.03v2.06c1.38-.27 2.63-.87 3.66-1.72l1.66 1.66L21 19.73 4.27 3z"/></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                     </div>
                 </div>`;
             }
