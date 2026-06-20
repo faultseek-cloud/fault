@@ -135,9 +135,9 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
         <div class="msg-header">
             <img class="msg-avatar" src="https://cdn.discordapp.com/avatars/${data.userId}/${data.avatar}.png">
             <span class="msg-user">${data.username}</span>
-            <span class="msg-time" style="font-size: 10px; color: #666; margin-left: 8px;">${dateStr} ${timeStr}</span>
+            <span class="msg-time">${dateStr} ${timeStr}</span>
         </div>
-        <div class="msg-content" style="display: flex; flex-direction: column; margin-left: 38px; margin-top: 5px;">
+        <div class="msg-content">
             ${data.message}
         </div>
     `;
@@ -221,10 +221,10 @@ async function startRecording() {
                         avatar: window.userData.avatar,
                         userId: window.userData.id,
                         message: `
-                            <div class="audio-message" id="container_${audioId}" style="background: #1a1a1a; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 5px;">
-                                <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #000; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
+                            <div class="audio-message" id="container_${audioId}">
+                                <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')">▶</button>
                                 <audio id="${audioId}" src="${reader.result}"></audio>
-                                <div class="waveform" style="display: flex; gap: 3px; align-items: center;">${generateWaveBars()}</div>
+                                <div class="waveform">${generateWaveBars()}</div>
                                 <span style="color:#fff; font-size: 12px;">${totalDuration}</span>
                             </div>`,
                         timestamp: Date.now()
