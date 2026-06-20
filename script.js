@@ -19,13 +19,14 @@ const authScreen = document.getElementById('auth-screen');
 const loadingScreen = document.getElementById('loading-screen');
 const sidebar = document.getElementById('sidebar');
 const msgInput = document.getElementById('msgInput');
-const actionBtn = document.getElementById('actionBtn');
 const iconMic = document.getElementById('icon-mic');
 const iconSend = document.getElementById('icon-send');
 const messagesContainer = document.getElementById('messages-container');
 const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
 const chatIcon = document.getElementById('chat-icon-element');
+
+iconSend.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
 
 if (chatIcon) {
     chatIcon.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
@@ -42,9 +43,6 @@ const pauseBtn = document.createElement('button');
 pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
 pauseBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #fff; margin-right: 10px;";
 addImgBtn.parentNode.insertBefore(pauseBtn, trashBtn);
-
-iconSend.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
-iconSend.style.display = "none";
 
 let typingTimeout;
 let mediaRecorder;
@@ -67,8 +65,13 @@ function updateVisibility() {
         iconMic.style.display = "none";
         iconSend.style.display = "block";
     } else {
-        iconMic.style.display = hasText ? "none" : "block";
-        iconSend.style.display = hasText ? "block" : "none";
+        if (hasText) {
+            iconMic.style.display = "none";
+            iconSend.style.display = "block";
+        } else {
+            iconMic.style.display = "block";
+            iconSend.style.display = "none";
+        }
     }
 }
 
@@ -276,7 +279,6 @@ async function startRecording() {
             audioContext.close();
         };
         mediaRecorder.start();
-        actionBtn.classList.add('active');
     } catch (err) { alert("Permissão de microfone necessária."); }
 }
 
@@ -304,7 +306,6 @@ function stopRecording() {
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
         isDiscarding = false;
         mediaRecorder.stop();
-        actionBtn.classList.remove('active');
     }
 }
 
