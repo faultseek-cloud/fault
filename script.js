@@ -26,7 +26,9 @@ const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
 const chatIcon = document.getElementById('chat-icon-element');
 
+// Define o ícone de envio como cinza e oculto inicialmente
 iconSend.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`;
+iconSend.style.display = "none"; 
 
 if (chatIcon) {
     chatIcon.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
@@ -57,6 +59,7 @@ let elapsedPausedTime = 0;
 let lastPauseTime = 0;
 let isDiscarding = false;
 
+// Lógica de visibilidade ajustada
 function updateVisibility() {
     const isRecording = mediaRecorder && mediaRecorder.state !== "inactive";
     const hasText = msgInput.value.trim().length > 0;
@@ -380,5 +383,6 @@ if (token) {
         window.history.replaceState({}, document.title, "/");
     });
 }
+
 msgInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 updateVisibility();
