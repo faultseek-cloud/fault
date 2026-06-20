@@ -124,13 +124,23 @@ function openImageOverlay(src) {
 
 window.toggleVideoPlay = (video) => {
     const btn = video.nextElementSibling;
+    const muteBtn = video.parentElement.querySelector('.mute-btn');
     if (video.paused) {
         video.play();
         btn.style.opacity = "0";
+        muteBtn.style.display = "flex";
     } else {
         video.pause();
         btn.style.opacity = "1";
     }
+};
+
+window.toggleMute = (btn) => {
+    const video = btn.parentElement.querySelector('video');
+    video.muted = !video.muted;
+    btn.innerHTML = video.muted ? 
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27l7.73 7.73H3v6h4l5 5v-6.73l4.25 4.25c-.67.48-1.42.84-2.25 1.03v2.06c1.38-.27 2.63-.87 3.66-1.72l1.66 1.66L21 19.73 4.27 3z"/></svg>` : 
+    `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>`;
 };
 
 onChildAdded(ref(db, 'messages'), (snapshot) => {
@@ -319,6 +329,9 @@ fileInput.addEventListener('change', (e) => {
                     <video src="${event.target.result}" style="width:100%; border-radius:8px; display:block;" onclick="toggleVideoPlay(this)"></video>
                     <div onclick="toggleVideoPlay(this.previousElementSibling)" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; pointer-events:none; transition:0.3s;">
                         <svg width="50" height="50" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                    <div class="mute-btn" onclick="toggleMute(this)" style="position:absolute; top:10px; right:10px; width:30px; height:30px; background:rgba(0,0,0,0.5); border-radius:50%; display:none; align-items:center; justify-content:center; cursor:pointer;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
                     </div>
                 </div>`;
             }
