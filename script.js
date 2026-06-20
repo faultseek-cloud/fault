@@ -28,6 +28,8 @@ const messagesContainer = document.getElementById('messages-container');
 const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
 
+fileInput.setAttribute("accept", "image/*,video/*");
+
 const trashBtn = document.createElement('button');
 trashBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
 trashBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #ff4d4d; margin-right: 10px;";
@@ -303,7 +305,6 @@ fileInput.addEventListener('change', (e) => {
             } else if (file.type.startsWith('video/')) {
                 messageContent = `<video src="${event.target.result}" controls style="max-width: 250px; border-radius: 8px; margin-top: 5px; display: block;"></video>`;
             }
-            
             if (messageContent) {
                 push(ref(db, 'messages'), {
                     username: window.userData.username,
