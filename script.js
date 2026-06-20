@@ -27,7 +27,6 @@ const iconSend = document.getElementById('icon-send');
 const messagesContainer = document.getElementById('messages-container');
 const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
-const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
 const trashBtn = document.createElement('button');
 trashBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
@@ -52,13 +51,22 @@ let elapsedPausedTime = 0;
 let lastPauseTime = 0;
 let isDiscarding = false;
 
-function generateWaveBars(count = 20) {
+function generateWaveBars() {
     let bars = "";
-    for (let i = 0; i < count; i++) {
-        bars += `<div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>`;
+    for (let i = 0; i < 20; i++) {
+        bars += `<div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px; pointer-events: none;"></div>`;
     }
     return bars;
 }
+
+window.handleWaveSeek = (e, audioId) => {
+    const audio = document.getElementById(audioId);
+    const container = e.currentTarget;
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percent = x / rect.width;
+    audio.currentTime = percent * audio.duration;
+};
 
 window.togglePlay = (id) => {
     const audio = document.getElementById(id);
@@ -105,8 +113,9 @@ function updateRecordingWaveform() {
 function openImageOverlay(src) {
     const overlay = document.createElement('div');
     overlay.className = 'image-overlay';
-    overlay.innerHTML = `<div class="close-overlay-btn">×</div><img src="${src}">`;
-    overlay.querySelector('.close-overlay-btn').onclick = () => overlay.remove();
+    overlay.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:1000;";
+    overlay.innerHTML = `<div style="position:absolute;top:20px;right:20px;cursor:pointer;color:#fff;font-size:30px;">×</div><img src="${src}" style="max-width:90%;max-height:90%;">`;
+    overlay.querySelector('div').onclick = () => overlay.remove();
     overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
     document.body.appendChild(overlay);
 }
@@ -151,9 +160,8 @@ function sendMessage() {
             timestamp: Date.now()
         });
         msgInput.value = '';
-        iconMic.style.color = "#666";
-        iconMic.classList.remove('hidden');
-        iconSend.classList.add('hidden');
+        iconMic.style.display = "block";
+        iconSend.style.display = "none";
         remove(ref(db, 'typing/' + window.userData.id));
     }
 }
@@ -174,8 +182,8 @@ async function startRecording() {
         elapsedPausedTime = 0;
         isDiscarding = false;
         
-        iconMic.classList.add('hidden');
-        iconSend.classList.remove('hidden');
+        iconMic.style.display = "none";
+        iconSend.style.display = "block";
         iconSend.style.color = "#666";
         addImgBtn.style.display = "none";
         trashBtn.style.display = "block";
@@ -212,7 +220,7 @@ async function startRecording() {
                             <div class="audio-message" id="container_${audioId}" style="background: #1a1a1a; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 5px;">
                                 <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #000; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
                                 <audio id="${audioId}" src="${reader.result}"></audio>
-                                <div class="waveform" style="display: flex; gap: 3px; align-items: center;">${generateWaveBars()}</div>
+                                <div class="waveform" onclick="handleWaveSeek(event, '${audioId}')" style="display: flex; gap: 3px; align-items: center; cursor: pointer;">${generateWaveBars()}</div>
                                 <span style="color:#fff; font-size: 12px;">${totalDuration}</span>
                             </div>`,
                         timestamp: Date.now()
@@ -221,9 +229,8 @@ async function startRecording() {
             }
             
             msgInput.value = '';
-            iconMic.classList.remove('hidden');
-            iconSend.classList.add('hidden');
-            iconSend.style.color = "";
+            iconMic.style.display = "block";
+            iconSend.style.display = "none";
             addImgBtn.style.display = "block";
             trashBtn.style.display = "none";
             pauseBtn.style.display = "none";
@@ -264,9 +271,7 @@ function stopRecording() {
 }
 
 actionBtn.addEventListener('click', () => {
-    if (!iconSend.classList.contains('hidden') && !msgInput.value.includes('-')) {
-        sendMessage();
-    } else if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
         stopRecording();
     } else {
         startRecording();
@@ -276,25 +281,14 @@ actionBtn.addEventListener('click', () => {
 msgInput.addEventListener('input', () => {
     if (!window.userData || (mediaRecorder && mediaRecorder.state !== "inactive")) return;
     const hasText = msgInput.value.trim().length > 0;
-    iconMic.classList.toggle('hidden', hasText);
-    iconSend.classList.toggle('hidden', !hasText);
-    
+    iconMic.style.display = hasText ? "none" : "block";
+    iconSend.style.display = hasText ? "block" : "none";
+    iconSend.style.color = hasText ? "#666" : "";
     set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
         remove(ref(db, 'typing/' + window.userData.id));
     }, 3000);
-});
-
-plusBtn.addEventListener('click', () => {
-    const communityIcons = iconsContainer.querySelectorAll('.icon-item:not(#plusBtn)');
-    if (communityIcons.length < 3) {
-        const newIcon = document.createElement('div');
-        newIcon.className = 'icon-item';
-        newIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`;
-        newIcon.addEventListener('click', () => mainScreen.classList.add('hidden'));
-        iconsContainer.insertBefore(newIcon, plusBtn);
-    }
 });
 
 addImgBtn.addEventListener('click', () => fileInput.click());
@@ -303,13 +297,22 @@ fileInput.addEventListener('change', (e) => {
     if (file && window.userData) {
         const reader = new FileReader();
         reader.onload = (event) => {
-            push(ref(db, 'messages'), {
-                username: window.userData.username,
-                avatar: window.userData.avatar,
-                userId: window.userData.id,
-                message: `<img src="${event.target.result}" style="max-width: 200px; border-radius: 8px; margin-top: 5px; display: block;">`,
-                timestamp: Date.now()
-            });
+            let messageContent = "";
+            if (file.type.startsWith('image/')) {
+                messageContent = `<img src="${event.target.result}" style="max-width: 200px; border-radius: 8px; margin-top: 5px; display: block;">`;
+            } else if (file.type.startsWith('video/')) {
+                messageContent = `<video src="${event.target.result}" controls style="max-width: 250px; border-radius: 8px; margin-top: 5px; display: block;"></video>`;
+            }
+            
+            if (messageContent) {
+                push(ref(db, 'messages'), {
+                    username: window.userData.username,
+                    avatar: window.userData.avatar,
+                    userId: window.userData.id,
+                    message: messageContent,
+                    timestamp: Date.now()
+                });
+            }
         };
         reader.readAsDataURL(file);
     }
