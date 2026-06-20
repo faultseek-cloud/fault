@@ -116,13 +116,19 @@ function openImageOverlay(src) {
     overlay.appendChild(closeBtn);
     overlay.appendChild(img);
     
+    // Lógica de toggle: Clicar na imagem esconde/mostra o X
     img.onclick = (e) => {
         e.stopPropagation();
         closeBtn.style.display = (closeBtn.style.display === 'none') ? 'flex' : 'none';
     };
     
+    // O clique no X fecha a imagem
     closeBtn.onclick = () => overlay.remove();
-    overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+    
+    // O clique no fundo (overlay) NÃO faz nada, apenas o clique na imagem ou no X
+    overlay.onclick = (e) => { 
+        if(e.target === closeBtn) overlay.remove(); 
+    };
     
     document.body.appendChild(overlay);
 }
@@ -139,9 +145,9 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
         <div class="msg-header">
             <img class="msg-avatar" src="https://cdn.discordapp.com/avatars/${data.userId}/${data.avatar}.png">
             <span class="msg-user">${data.username}</span>
-            <span class="msg-time" style="font-size: 10px; color: #666; margin-left: 8px;">${dateStr} ${timeStr}</span>
+            <span class="msg-time" style="font-size: 10px; color: #666; margin-left: 5px;">${dateStr} ${timeStr}</span>
         </div>
-        <div class="msg-content" style="display: flex; flex-direction: column; margin-left: 38px; margin-top: 5px;">
+        <div class="msg-content" style="display: flex; flex-direction: column; margin-left: 38px; margin-top: 2px;">
             ${data.message}
         </div>
     `;
