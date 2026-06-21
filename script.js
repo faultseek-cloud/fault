@@ -116,16 +116,13 @@ function openImageOverlay(src) {
     overlay.appendChild(closeBtn);
     overlay.appendChild(img);
     
-    // Lógica de toggle: Clicar na imagem esconde/mostra o X
     img.onclick = (e) => {
         e.stopPropagation();
         closeBtn.style.display = (closeBtn.style.display === 'none') ? 'flex' : 'none';
     };
     
-    // O clique no X fecha a imagem
     closeBtn.onclick = () => overlay.remove();
     
-    // O clique no fundo (overlay) NÃO faz nada, apenas o clique na imagem ou no X
     overlay.onclick = (e) => { 
         if(e.target === closeBtn) overlay.remove(); 
     };
@@ -182,7 +179,9 @@ function sendMessage() {
 
 async function startRecording() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 48000 } 
+        });
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
         const source = audioContext.createMediaStreamSource(stream);
@@ -190,7 +189,8 @@ async function startRecording() {
         analyser.fftSize = 32;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
         
-        mediaRecorder = new MediaRecorder(stream);
+        const options = { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 };
+        mediaRecorder = new MediaRecorder(stream, options);
         audioChunks = [];
         recordingStartTime = Date.now();
         elapsedPausedTime = 0;
