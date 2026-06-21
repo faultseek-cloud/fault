@@ -27,7 +27,6 @@ const iconSend = document.getElementById('icon-send');
 const messagesContainer = document.getElementById('messages-container');
 const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
-const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
 const trashBtn = document.createElement('button');
 trashBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
@@ -94,39 +93,27 @@ function formatDuration(totalSeconds) {
 function updateRecordingWaveform() {
     if (!analyser) return;
     analyser.getByteFrequencyData(dataArray);
-    const bars = document.querySelectorAll('.recording-wave-bar');
-    bars.forEach((bar, i) => {
-        const height = Math.max(5, (dataArray[i] / 255) * 40);
-        bar.style.height = `${height}px`;
-    });
     animationId = requestAnimationFrame(updateRecordingWaveform);
 }
 
 function openImageOverlay(src) {
     const overlay = document.createElement('div');
     overlay.className = 'image-overlay';
-    
     const closeBtn = document.createElement('div');
     closeBtn.className = 'close-overlay-btn';
     closeBtn.innerText = '×';
-    
     const img = document.createElement('img');
     img.src = src;
-    
     overlay.appendChild(closeBtn);
     overlay.appendChild(img);
-    
     img.onclick = (e) => {
         e.stopPropagation();
         closeBtn.style.display = (closeBtn.style.display === 'none') ? 'flex' : 'none';
     };
-    
     closeBtn.onclick = () => overlay.remove();
-    
     overlay.onclick = (e) => { 
         if(e.target === closeBtn) overlay.remove(); 
     };
-    
     document.body.appendChild(overlay);
 }
 
@@ -135,7 +122,6 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
     const date = new Date(data.timestamp);
     const dateStr = date.toLocaleDateString('pt-BR');
     const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message';
     msgDiv.innerHTML = `
@@ -148,13 +134,11 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
             ${data.message}
         </div>
     `;
-    
     const imgElement = msgDiv.querySelector('img[src^="data:image"]');
     if (imgElement) {
         imgElement.style.cursor = 'pointer';
         imgElement.onclick = () => openImageOverlay(imgElement.src);
     }
-
     messagesContainer.prepend(msgDiv);
     if (messagesContainer.scrollTop > -100) messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
 });
@@ -179,9 +163,7 @@ function sendMessage() {
 
 async function startRecording() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 48000 } 
-        });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
         const source = audioContext.createMediaStreamSource(stream);
@@ -189,8 +171,7 @@ async function startRecording() {
         analyser.fftSize = 32;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
         
-        const options = { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 };
-        mediaRecorder = new MediaRecorder(stream, options);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
         audioChunks = [];
         recordingStartTime = Date.now();
         elapsedPausedTime = 0;
@@ -205,6 +186,8 @@ async function startRecording() {
         msgInput.value = "0:00 - 2:00";
         
         updateRecordingWaveform();
+        
+        mediaRecorder.start();
         
         recordingInterval = setInterval(() => {
             if (mediaRecorder.state === "recording") {
@@ -250,9 +233,8 @@ async function startRecording() {
             trashBtn.style.display = "none";
             pauseBtn.style.display = "none";
             stream.getTracks().forEach(track => track.stop());
-            audioContext.close();
+            if (audioContext) audioContext.close();
         };
-        mediaRecorder.start();
         actionBtn.classList.add('active');
     } catch (err) { alert("Permissão de microfone necessária."); }
 }
