@@ -105,28 +105,16 @@ function updateRecordingWaveform() {
 function openImageOverlay(src) {
     const overlay = document.createElement('div');
     overlay.className = 'image-overlay';
-    
     const closeBtn = document.createElement('div');
     closeBtn.className = 'close-overlay-btn';
     closeBtn.innerText = '×';
-    
     const img = document.createElement('img');
     img.src = src;
-    
     overlay.appendChild(closeBtn);
     overlay.appendChild(img);
-    
-    img.onclick = (e) => {
-        e.stopPropagation();
-        closeBtn.style.display = (closeBtn.style.display === 'none') ? 'flex' : 'none';
-    };
-    
+    img.onclick = (e) => { e.stopPropagation(); closeBtn.style.display = (closeBtn.style.display === 'none') ? 'flex' : 'none'; };
     closeBtn.onclick = () => overlay.remove();
-    
-    overlay.onclick = (e) => { 
-        if(e.target === closeBtn) overlay.remove(); 
-    };
-    
+    overlay.onclick = (e) => { if(e.target === closeBtn) overlay.remove(); };
     document.body.appendChild(overlay);
 }
 
@@ -148,13 +136,11 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
             ${data.message}
         </div>
     `;
-    
     const imgElement = msgDiv.querySelector('img[src^="data:image"]');
     if (imgElement) {
         imgElement.style.cursor = 'pointer';
         imgElement.onclick = () => openImageOverlay(imgElement.src);
     }
-
     messagesContainer.prepend(msgDiv);
     if (messagesContainer.scrollTop > -100) messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
 });
@@ -179,7 +165,17 @@ function sendMessage() {
 
 async function startRecording() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // AJUSTES DE ALTA QUALIDADE E SUPRESSÃO DE RUÍDO
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                sampleRate: 48000,
+                channelCount: 1
+            } 
+        });
+        
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
         const source = audioContext.createMediaStreamSource(stream);
@@ -187,8 +183,10 @@ async function startRecording() {
         analyser.fftSize = 32;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
         
-        // Alteração: Adicionado codec opus para reduzir latência
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+        // CODEC OPUS PARA ÁUDIO LIMPO E COMPATÍVEL
+        const options = { mimeType: 'audio/webm;codecs=opus' };
+        mediaRecorder = new MediaRecorder(stream, options);
+        
         audioChunks = [];
         recordingStartTime = Date.now();
         elapsedPausedTime = 0;
@@ -203,9 +201,6 @@ async function startRecording() {
         msgInput.value = "0:00 - 2:00";
         
         updateRecordingWaveform();
-        
-        // Alteração: O start é chamado imediatamente
-        mediaRecorder.start();
         
         recordingInterval = setInterval(() => {
             if (mediaRecorder.state === "recording") {
@@ -251,8 +246,9 @@ async function startRecording() {
             trashBtn.style.display = "none";
             pauseBtn.style.display = "none";
             stream.getTracks().forEach(track => track.stop());
-            if (audioContext) audioContext.close();
+            audioContext.close();
         };
+        mediaRecorder.start();
         actionBtn.classList.add('active');
     } catch (err) { alert("Permissão de microfone necessária."); }
 }
@@ -300,12 +296,9 @@ msgInput.addEventListener('input', () => {
     const hasText = msgInput.value.trim().length > 0;
     iconMic.classList.toggle('hidden', hasText);
     iconSend.classList.toggle('hidden', !hasText);
-    
     set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
     clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => {
-        remove(ref(db, 'typing/' + window.userData.id));
-    }, 3000);
+    typingTimeout = setTimeout(() => { remove(ref(db, 'typing/' + window.userData.id)); }, 3000);
 });
 
 plusBtn.addEventListener('click', () => {
