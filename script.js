@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, set, remove } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, set, remove, onChildRemoved } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBX5mGILY9TT_M8S79X4UTRbHinH1PB6gI",
@@ -27,23 +27,15 @@ const iconSend = document.getElementById('icon-send');
 const messagesContainer = document.getElementById('messages-container');
 const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
-const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
-let selectedMessages = new Set();
-let isSelectionMode = false;
+const defaultHeader = document.getElementById('default-header');
+const selectionHeader = document.getElementById('selection-header');
+const selectionCount = document.getElementById('selection-count');
+const cancelSelectionBtn = document.getElementById('cancel-selection');
+const deleteSelectedBtn = document.getElementById('delete-selected');
 
-const header = document.createElement('header');
-header.id = 'main-header';
-header.style.cssText = "padding: 10px; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: space-between; height: 50px; background: #000;";
-header.innerHTML = `
-    <div id="default-title"><h1>FAULT SERVER</h1></div>
-    <div id="selection-bar" style="display:none; align-items:center; gap:20px; width:100%;">
-        <button id="cancel-selection" style="background:none; border:none; color:#fff; cursor:pointer; font-size: 24px;">←</button>
-        <span id="selected-count" style="flex-grow:1; text-align:center; font-weight:bold;">0</span>
-        <button id="delete-selected" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 20px;">🗑️</button>
-    </div>
-`;
-document.body.prepend(header);
+let selectedMessages = [];
+let pressTimer;
 
 const trashBtn = document.createElement('button');
 trashBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
@@ -55,33 +47,55 @@ pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none
 pauseBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #fff; margin-right: 10px;";
 addImgBtn.parentNode.insertBefore(pauseBtn, trashBtn);
 
-let typingTimeout, mediaRecorder, audioChunks = [], recordingStartTime, recordingInterval, audioContext, analyser, dataArray, animationId, elapsedPausedTime = 0, lastPauseTime = 0, isDiscarding = false;
-
-function updateSelectionUI() {
-    const bar = document.getElementById('selection-bar');
-    const title = document.getElementById('default-title');
-    const count = document.getElementById('selected-count');
-    isSelectionMode = selectedMessages.size > 0;
-    bar.style.display = isSelectionMode ? 'flex' : 'none';
-    title.style.display = isSelectionMode ? 'none' : 'block';
-    count.innerText = selectedMessages.size;
+function toggleSelection(msgId, element) {
+    if (selectedMessages.includes(msgId)) {
+        selectedMessages = selectedMessages.filter(id => id !== msgId);
+        element.classList.remove('selected');
+    } else {
+        selectedMessages.push(msgId);
+        element.classList.add('selected');
+    }
+    
+    if (selectedMessages.length > 0) {
+        defaultHeader.classList.add('hidden');
+        selectionHeader.classList.remove('hidden');
+        selectionCount.innerText = selectedMessages.length;
+    } else {
+        cancelSelection();
+    }
 }
 
-document.getElementById('delete-selected').onclick = () => {
-    selectedMessages.forEach(msgId => remove(ref(db, 'messages/' + msgId)));
-    selectedMessages.clear();
-    updateSelectionUI();
+function cancelSelection() {
+    selectedMessages = [];
+    document.querySelectorAll('.message').forEach(el => el.classList.remove('selected'));
+    defaultHeader.classList.remove('hidden');
+    selectionHeader.classList.add('hidden');
+}
+
+cancelSelectionBtn.onclick = cancelSelection;
+deleteSelectedBtn.onclick = () => {
+    selectedMessages.forEach(id => remove(ref(db, 'messages/' + id)));
+    cancelSelection();
 };
 
-document.getElementById('cancel-selection').onclick = () => {
-    selectedMessages.clear();
-    document.querySelectorAll('.message').forEach(el => el.style.backgroundColor = 'transparent');
-    updateSelectionUI();
-};
+let typingTimeout;
+let mediaRecorder;
+let audioChunks = [];
+let recordingStartTime;
+let recordingInterval;
+let audioContext;
+let analyser;
+let dataArray;
+let animationId;
+let elapsedPausedTime = 0;
+let lastPauseTime = 0;
+let isDiscarding = false;
 
 function generateWaveBars(count = 20) {
     let bars = "";
-    for (let i = 0; i < count; i++) bars += `<div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>`;
+    for (let i = 0; i < count; i++) {
+        bars += `<div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>`;
+    }
     return bars;
 }
 
@@ -90,6 +104,7 @@ window.togglePlay = (id) => {
     const btn = document.querySelector(`[data-play-btn="${id}"]`);
     const container = document.getElementById('container_' + id);
     const bars = container.querySelectorAll('.wave-bar');
+    
     if (audio.paused) {
         audio.play();
         btn.innerHTML = "❚❚";
@@ -103,7 +118,10 @@ window.togglePlay = (id) => {
         audio.pause();
         btn.innerHTML = "▶";
     }
-    audio.onended = () => { btn.innerHTML = "▶"; bars.forEach(bar => bar.style.background = '#444'); };
+    audio.onended = () => { 
+        btn.innerHTML = "▶"; 
+        bars.forEach(bar => bar.style.background = '#444');
+    };
 };
 
 function formatDuration(totalSeconds) {
@@ -133,49 +151,53 @@ function openImageOverlay(src) {
     img.src = src;
     overlay.appendChild(closeBtn);
     overlay.appendChild(img);
-    img.onclick = (e) => { e.stopPropagation(); closeBtn.style.display = (closeBtn.style.display === 'none') ? 'flex' : 'none'; };
+    img.onclick = (e) => {
+        e.stopPropagation();
+        closeBtn.style.display = (closeBtn.style.display === 'none') ? 'flex' : 'none';
+    };
     closeBtn.onclick = () => overlay.remove();
-    overlay.onclick = (e) => { if(e.target === closeBtn) overlay.remove(); };
+    overlay.onclick = (e) => { 
+        if(e.target === closeBtn) overlay.remove(); 
+    };
     document.body.appendChild(overlay);
 }
 
 onChildAdded(ref(db, 'messages'), (snapshot) => {
     const data = snapshot.val();
-    const msgId = snapshot.key;
     const date = new Date(data.timestamp);
     const dateStr = date.toLocaleDateString('pt-BR');
     const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message';
-    msgDiv.dataset.id = msgId;
-    
-    let timer;
-    msgDiv.onpointerdown = () => timer = setTimeout(() => { selectedMessages.add(msgId); msgDiv.style.backgroundColor = '#222'; updateSelectionUI(); }, 600);
-    msgDiv.onpointerup = () => clearTimeout(timer);
-    msgDiv.onclick = () => {
-        if(isSelectionMode) {
-            if(selectedMessages.has(msgId)) { selectedMessages.delete(msgId); msgDiv.style.backgroundColor = 'transparent'; }
-            else { selectedMessages.add(msgId); msgDiv.style.backgroundColor = '#222'; }
-            updateSelectionUI();
-        }
-    };
-    
+    msgDiv.id = 'msg-' + snapshot.key;
     msgDiv.innerHTML = `
         <div class="msg-header">
             <img class="msg-avatar" src="https://cdn.discordapp.com/avatars/${data.userId}/${data.avatar}.png">
             <span class="msg-user">${data.username}</span>
-            <span class="msg-time" style="font-size: 10px; color: #666; margin-left: 5px;">${dateStr} ${timeStr}</span>
+            <span class="msg-time">${dateStr} ${timeStr}</span>
         </div>
-        <div class="msg-content" style="display: flex; flex-direction: column; margin-left: 38px; margin-top: 2px;">
+        <div class="msg-content">
             ${data.message}
         </div>
     `;
+    
+    msgDiv.addEventListener('touchstart', () => pressTimer = setTimeout(() => toggleSelection(snapshot.key, msgDiv), 600));
+    msgDiv.addEventListener('touchend', () => clearTimeout(pressTimer));
+    msgDiv.onclick = () => { if (selectedMessages.length > 0) toggleSelection(snapshot.key, msgDiv); };
+
     const imgElement = msgDiv.querySelector('img[src^="data:image"]');
     if (imgElement) {
         imgElement.style.cursor = 'pointer';
         imgElement.onclick = () => openImageOverlay(imgElement.src);
     }
+
     messagesContainer.prepend(msgDiv);
+});
+
+onChildRemoved(ref(db, 'messages'), (snapshot) => {
+    const el = document.getElementById('msg-' + snapshot.key);
+    if (el) el.remove();
 });
 
 function sendMessage() {
@@ -192,7 +214,6 @@ function sendMessage() {
         iconMic.style.color = "#666";
         iconMic.classList.remove('hidden');
         iconSend.classList.add('hidden');
-        remove(ref(db, 'typing/' + window.userData.id));
     }
 }
 
@@ -212,12 +233,10 @@ async function startRecording() {
         isDiscarding = false;
         iconMic.classList.add('hidden');
         iconSend.classList.remove('hidden');
-        iconSend.style.color = "#666";
         addImgBtn.style.display = "none";
         trashBtn.style.display = "block";
         pauseBtn.style.display = "block";
         msgInput.value = "0:00 - 2:00";
-        updateRecordingWaveform();
         recordingInterval = setInterval(() => {
             if (mediaRecorder.state === "recording") {
                 const elapsed = Math.floor((Date.now() - recordingStartTime - elapsedPausedTime) / 1000);
@@ -240,7 +259,13 @@ async function startRecording() {
                         username: window.userData.username,
                         avatar: window.userData.avatar,
                         userId: window.userData.id,
-                        message: `<div class="audio-message" id="container_${audioId}" style="background: #1a1a1a; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 5px;"><button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #000; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button><audio id="${audioId}" src="${reader.result}"></audio><div class="waveform" style="display: flex; gap: 3px; align-items: center;">${generateWaveBars()}</div><span style="color:#fff; font-size: 12px;">${totalDuration}</span></div>`,
+                        message: `
+                            <div class="audio-message" id="container_${audioId}">
+                                <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')">▶</button>
+                                <audio id="${audioId}" src="${reader.result}"></audio>
+                                <div class="waveform">${generateWaveBars()}</div>
+                                <span style="color:#fff; font-size: 12px;">${totalDuration}</span>
+                            </div>`,
                         timestamp: Date.now()
                     });
                 };
@@ -248,7 +273,6 @@ async function startRecording() {
             msgInput.value = '';
             iconMic.classList.remove('hidden');
             iconSend.classList.add('hidden');
-            iconSend.style.color = "";
             addImgBtn.style.display = "block";
             trashBtn.style.display = "none";
             pauseBtn.style.display = "none";
@@ -256,17 +280,23 @@ async function startRecording() {
             audioContext.close();
         };
         mediaRecorder.start();
-        actionBtn.classList.add('active');
     } catch (err) { alert("Permissão de microfone necessária."); }
 }
 
 trashBtn.onclick = () => { if (mediaRecorder) { isDiscarding = true; mediaRecorder.stop(); audioChunks = []; } };
 pauseBtn.onclick = () => {
-    if (mediaRecorder.state === "recording") { mediaRecorder.pause(); lastPauseTime = Date.now(); pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`; }
-    else if (mediaRecorder.state === "paused") { mediaRecorder.resume(); elapsedPausedTime += (Date.now() - lastPauseTime); pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`; }
+    if (mediaRecorder.state === "recording") {
+        mediaRecorder.pause();
+        lastPauseTime = Date.now();
+        pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
+    } else if (mediaRecorder.state === "paused") {
+        mediaRecorder.resume();
+        elapsedPausedTime += (Date.now() - lastPauseTime);
+        pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
+    }
 };
 
-function stopRecording() { if (mediaRecorder && mediaRecorder.state !== "inactive") { isDiscarding = false; mediaRecorder.stop(); actionBtn.classList.remove('active'); } }
+function stopRecording() { if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop(); }
 
 actionBtn.addEventListener('click', () => {
     if (!iconSend.classList.contains('hidden') && !msgInput.value.includes('-')) sendMessage();
@@ -279,9 +309,6 @@ msgInput.addEventListener('input', () => {
     const hasText = msgInput.value.trim().length > 0;
     iconMic.classList.toggle('hidden', hasText);
     iconSend.classList.toggle('hidden', !hasText);
-    set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => remove(ref(db, 'typing/' + window.userData.id)), 3000);
 });
 
 plusBtn.addEventListener('click', () => {
@@ -290,7 +317,6 @@ plusBtn.addEventListener('click', () => {
         const newIcon = document.createElement('div');
         newIcon.className = 'icon-item';
         newIcon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>`;
-        newIcon.addEventListener('click', () => mainScreen.classList.add('hidden'));
         iconsContainer.insertBefore(newIcon, plusBtn);
     }
 });
