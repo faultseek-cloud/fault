@@ -65,7 +65,6 @@ window.togglePlay = (id) => {
     const btn = document.querySelector(`[data-play-btn="${id}"]`);
     const container = document.getElementById('container_' + id);
     const bars = container.querySelectorAll('.wave-bar');
-    
     if (audio.paused) {
         audio.play();
         btn.innerHTML = "❚❚";
@@ -79,10 +78,7 @@ window.togglePlay = (id) => {
         audio.pause();
         btn.innerHTML = "▶";
     }
-    audio.onended = () => { 
-        btn.innerHTML = "▶"; 
-        bars.forEach(bar => bar.style.background = '#444');
-    };
+    audio.onended = () => { btn.innerHTML = "▶"; bars.forEach(bar => bar.style.background = '#444'); };
 };
 
 function formatDuration(totalSeconds) {
@@ -123,7 +119,6 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
     const date = new Date(data.timestamp);
     const dateStr = date.toLocaleDateString('pt-BR');
     const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message';
     msgDiv.innerHTML = `
@@ -165,7 +160,6 @@ function sendMessage() {
 
 async function startRecording() {
     try {
-        // AJUSTES DE ALTA QUALIDADE E SUPRESSÃO DE RUÍDO
         const stream = await navigator.mediaDevices.getUserMedia({ 
             audio: {
                 echoCancellation: true,
@@ -175,23 +169,18 @@ async function startRecording() {
                 channelCount: 1
             } 
         });
-        
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
         const source = audioContext.createMediaStreamSource(stream);
         source.connect(analyser);
         analyser.fftSize = 32;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
-        
-        // CODEC OPUS PARA ÁUDIO LIMPO E COMPATÍVEL
         const options = { mimeType: 'audio/webm;codecs=opus' };
         mediaRecorder = new MediaRecorder(stream, options);
-        
         audioChunks = [];
         recordingStartTime = Date.now();
         elapsedPausedTime = 0;
         isDiscarding = false;
-        
         iconMic.classList.add('hidden');
         iconSend.classList.remove('hidden');
         iconSend.style.color = "#666";
@@ -199,9 +188,7 @@ async function startRecording() {
         trashBtn.style.display = "block";
         pauseBtn.style.display = "block";
         msgInput.value = "0:00 - 2:00";
-        
         updateRecordingWaveform();
-        
         recordingInterval = setInterval(() => {
             if (mediaRecorder.state === "recording") {
                 const elapsed = Math.floor((Date.now() - recordingStartTime - elapsedPausedTime) / 1000);
@@ -209,12 +196,10 @@ async function startRecording() {
                 if (elapsed >= 120) stopRecording();
             }
         }, 1000);
-
         mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
         mediaRecorder.onstop = () => {
             clearInterval(recordingInterval);
             cancelAnimationFrame(animationId);
-            
             if (!isDiscarding && audioChunks.length > 0) {
                 const totalDuration = formatDuration(Math.floor((Date.now() - recordingStartTime - elapsedPausedTime) / 1000));
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -237,7 +222,6 @@ async function startRecording() {
                     });
                 };
             }
-            
             msgInput.value = '';
             iconMic.classList.remove('hidden');
             iconSend.classList.add('hidden');
@@ -246,7 +230,7 @@ async function startRecording() {
             trashBtn.style.display = "none";
             pauseBtn.style.display = "none";
             stream.getTracks().forEach(track => track.stop());
-            audioContext.close();
+            if (audioContext) audioContext.close();
         };
         mediaRecorder.start();
         actionBtn.classList.add('active');
