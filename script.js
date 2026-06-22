@@ -29,6 +29,22 @@ const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
 const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
+let selectedMessages = new Set();
+let isSelectionMode = false;
+
+const header = document.createElement('header');
+header.id = 'main-header';
+header.style.cssText = "padding: 10px; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: space-between; height: 50px; background: #000;";
+header.innerHTML = `
+    <div id="default-title"><h1>FAULT SERVER</h1></div>
+    <div id="selection-bar" style="display:none; align-items:center; gap:20px; width:100%;">
+        <button id="cancel-selection" style="background:none; border:none; color:#fff; cursor:pointer; font-size: 24px;">←</button>
+        <span id="selected-count" style="flex-grow:1; text-align:center; font-weight:bold;">0</span>
+        <button id="delete-selected" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size: 20px;">🗑️</button>
+    </div>
+`;
+document.body.prepend(header);
+
 const trashBtn = document.createElement('button');
 trashBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
 trashBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #ff4d4d; margin-right: 10px;";
@@ -39,24 +55,33 @@ pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none
 pauseBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #fff; margin-right: 10px;";
 addImgBtn.parentNode.insertBefore(pauseBtn, trashBtn);
 
-let typingTimeout;
-let mediaRecorder;
-let audioChunks = [];
-let recordingStartTime;
-let recordingInterval;
-let audioContext;
-let analyser;
-let dataArray;
-let animationId;
-let elapsedPausedTime = 0;
-let lastPauseTime = 0;
-let isDiscarding = false;
+let typingTimeout, mediaRecorder, audioChunks = [], recordingStartTime, recordingInterval, audioContext, analyser, dataArray, animationId, elapsedPausedTime = 0, lastPauseTime = 0, isDiscarding = false;
+
+function updateSelectionUI() {
+    const bar = document.getElementById('selection-bar');
+    const title = document.getElementById('default-title');
+    const count = document.getElementById('selected-count');
+    isSelectionMode = selectedMessages.size > 0;
+    bar.style.display = isSelectionMode ? 'flex' : 'none';
+    title.style.display = isSelectionMode ? 'none' : 'block';
+    count.innerText = selectedMessages.size;
+}
+
+document.getElementById('delete-selected').onclick = () => {
+    selectedMessages.forEach(msgId => remove(ref(db, 'messages/' + msgId)));
+    selectedMessages.clear();
+    updateSelectionUI();
+};
+
+document.getElementById('cancel-selection').onclick = () => {
+    selectedMessages.clear();
+    document.querySelectorAll('.message').forEach(el => el.style.backgroundColor = 'transparent');
+    updateSelectionUI();
+};
 
 function generateWaveBars(count = 20) {
     let bars = "";
-    for (let i = 0; i < count; i++) {
-        bars += `<div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>`;
-    }
+    for (let i = 0; i < count; i++) bars += `<div class="wave-bar" style="width: 3px; height: 15px; background: #444; border-radius: 2px;"></div>`;
     return bars;
 }
 
@@ -116,11 +141,25 @@ function openImageOverlay(src) {
 
 onChildAdded(ref(db, 'messages'), (snapshot) => {
     const data = snapshot.val();
+    const msgId = snapshot.key;
     const date = new Date(data.timestamp);
     const dateStr = date.toLocaleDateString('pt-BR');
     const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message';
+    msgDiv.dataset.id = msgId;
+    
+    let timer;
+    msgDiv.onpointerdown = () => timer = setTimeout(() => { selectedMessages.add(msgId); msgDiv.style.backgroundColor = '#222'; updateSelectionUI(); }, 600);
+    msgDiv.onpointerup = () => clearTimeout(timer);
+    msgDiv.onclick = () => {
+        if(isSelectionMode) {
+            if(selectedMessages.has(msgId)) { selectedMessages.delete(msgId); msgDiv.style.backgroundColor = 'transparent'; }
+            else { selectedMessages.add(msgId); msgDiv.style.backgroundColor = '#222'; }
+            updateSelectionUI();
+        }
+    };
+    
     msgDiv.innerHTML = `
         <div class="msg-header">
             <img class="msg-avatar" src="https://cdn.discordapp.com/avatars/${data.userId}/${data.avatar}.png">
@@ -137,7 +176,6 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
         imgElement.onclick = () => openImageOverlay(imgElement.src);
     }
     messagesContainer.prepend(msgDiv);
-    if (messagesContainer.scrollTop > -100) messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 function sendMessage() {
@@ -160,23 +198,14 @@ function sendMessage() {
 
 async function startRecording() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true,
-                sampleRate: 48000,
-                channelCount: 1
-            } 
-        });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
         const source = audioContext.createMediaStreamSource(stream);
         source.connect(analyser);
         analyser.fftSize = 32;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
-        const options = { mimeType: 'audio/webm;codecs=opus' };
-        mediaRecorder = new MediaRecorder(stream, options);
+        mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
         recordingStartTime = Date.now();
         elapsedPausedTime = 0;
@@ -211,13 +240,7 @@ async function startRecording() {
                         username: window.userData.username,
                         avatar: window.userData.avatar,
                         userId: window.userData.id,
-                        message: `
-                            <div class="audio-message" id="container_${audioId}" style="background: #1a1a1a; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 5px;">
-                                <button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #000; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button>
-                                <audio id="${audioId}" src="${reader.result}"></audio>
-                                <div class="waveform" style="display: flex; gap: 3px; align-items: center;">${generateWaveBars()}</div>
-                                <span style="color:#fff; font-size: 12px;">${totalDuration}</span>
-                            </div>`,
+                        message: `<div class="audio-message" id="container_${audioId}" style="background: #1a1a1a; padding: 10px 15px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 5px;"><button class="play-btn" data-play-btn="${audioId}" onclick="togglePlay('${audioId}')" style="background: white; color: #000; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center;">▶</button><audio id="${audioId}" src="${reader.result}"></audio><div class="waveform" style="display: flex; gap: 3px; align-items: center;">${generateWaveBars()}</div><span style="color:#fff; font-size: 12px;">${totalDuration}</span></div>`,
                         timestamp: Date.now()
                     });
                 };
@@ -230,49 +253,25 @@ async function startRecording() {
             trashBtn.style.display = "none";
             pauseBtn.style.display = "none";
             stream.getTracks().forEach(track => track.stop());
-            if (audioContext) audioContext.close();
+            audioContext.close();
         };
         mediaRecorder.start();
         actionBtn.classList.add('active');
     } catch (err) { alert("Permissão de microfone necessária."); }
 }
 
-trashBtn.onclick = () => {
-    if (mediaRecorder) {
-        isDiscarding = true;
-        mediaRecorder.stop();
-        audioChunks = [];
-    }
-};
-
+trashBtn.onclick = () => { if (mediaRecorder) { isDiscarding = true; mediaRecorder.stop(); audioChunks = []; } };
 pauseBtn.onclick = () => {
-    if (mediaRecorder.state === "recording") {
-        mediaRecorder.pause();
-        lastPauseTime = Date.now();
-        pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
-    } else if (mediaRecorder.state === "paused") {
-        mediaRecorder.resume();
-        elapsedPausedTime += (Date.now() - lastPauseTime);
-        pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
-    }
+    if (mediaRecorder.state === "recording") { mediaRecorder.pause(); lastPauseTime = Date.now(); pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`; }
+    else if (mediaRecorder.state === "paused") { mediaRecorder.resume(); elapsedPausedTime += (Date.now() - lastPauseTime); pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`; }
 };
 
-function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        isDiscarding = false;
-        mediaRecorder.stop();
-        actionBtn.classList.remove('active');
-    }
-}
+function stopRecording() { if (mediaRecorder && mediaRecorder.state !== "inactive") { isDiscarding = false; mediaRecorder.stop(); actionBtn.classList.remove('active'); } }
 
 actionBtn.addEventListener('click', () => {
-    if (!iconSend.classList.contains('hidden') && !msgInput.value.includes('-')) {
-        sendMessage();
-    } else if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        stopRecording();
-    } else {
-        startRecording();
-    }
+    if (!iconSend.classList.contains('hidden') && !msgInput.value.includes('-')) sendMessage();
+    else if (mediaRecorder && mediaRecorder.state !== "inactive") stopRecording();
+    else startRecording();
 });
 
 msgInput.addEventListener('input', () => {
@@ -282,7 +281,7 @@ msgInput.addEventListener('input', () => {
     iconSend.classList.toggle('hidden', !hasText);
     set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
     clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => { remove(ref(db, 'typing/' + window.userData.id)); }, 3000);
+    typingTimeout = setTimeout(() => remove(ref(db, 'typing/' + window.userData.id)), 3000);
 });
 
 plusBtn.addEventListener('click', () => {
