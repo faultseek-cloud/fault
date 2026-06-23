@@ -29,6 +29,21 @@ const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
 const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
+// Implementação da funcionalidade de deletar
+let selectedMessageId = null;
+const deleteBtn = document.createElement('button');
+deleteBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+deleteBtn.style.cssText = "display: none; background: #ff4d4d; border: none; color: white; border-radius: 5px; cursor: pointer; padding: 5px 10px; margin-bottom: 10px;";
+document.body.prepend(deleteBtn);
+
+deleteBtn.onclick = () => {
+    if (selectedMessageId) {
+        remove(ref(db, 'messages/' + selectedMessageId));
+        deleteBtn.style.display = "none";
+        selectedMessageId = null;
+    }
+};
+
 const trashBtn = document.createElement('button');
 trashBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
 trashBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #ff4d4d; margin-right: 10px;";
@@ -116,16 +131,12 @@ function openImageOverlay(src) {
     overlay.appendChild(closeBtn);
     overlay.appendChild(img);
     
-    // Lógica de toggle: Clicar na imagem esconde/mostra o X
     img.onclick = (e) => {
         e.stopPropagation();
         closeBtn.style.display = (closeBtn.style.display === 'none') ? 'flex' : 'none';
     };
     
-    // O clique no X fecha a imagem
     closeBtn.onclick = () => overlay.remove();
-    
-    // O clique no fundo (overlay) NÃO faz nada, apenas o clique na imagem ou no X
     overlay.onclick = (e) => { 
         if(e.target === closeBtn) overlay.remove(); 
     };
@@ -151,6 +162,14 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
             ${data.message}
         </div>
     `;
+
+    // Lógica para selecionar a mensagem ao clicar com botão direito
+    msgDiv.oncontextmenu = (e) => {
+        e.preventDefault();
+        selectedMessageId = snapshot.key;
+        deleteBtn.style.display = "block";
+        msgDiv.style.border = "1px solid red";
+    };
     
     const imgElement = msgDiv.querySelector('img[src^="data:image"]');
     if (imgElement) {
