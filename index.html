@@ -10,8 +10,8 @@
 
     <nav id="sidebar" class="sidebar hidden">
         <div class="sidebar-icons" id="sidebar-icons-container">
-            <div class="icon-item active" id="first-chat-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21 11.5a8.5 8.5 0 0 1-17 0 8.5 8.5 0 0 1 1.7-5.3A12.7 12.7 0 0 0 3.7 3.7a1.1 1.1 0 0 0-.1-1.6c-.4-.4-1.1-.3-1.5.1a14.7 14.7 0 0 1-2 2.1c-.2.2-.1.5.1.7a9.5 9.5 0 0 0 2 2A8.5 8.5 0 0 1 21 11.5zm-1.8 0A6.7 6.7 0 0 0 7.7 7.7L7.6 7.6a14.7 14.7 0 0 1 1.2-1.2 1.1 1.1 0 0 0 .1-1.6.8.8 0 0 0-1.2-.1c-.4.4-.8.8-1.2 1.2a8.5 8.5 0 0 1 12.7 10.4 12.7 12.7 0 0 0 1.2-1.2 1.1 1.1 0 0 0 .1-1.6.8.8 0 0 0-1.2-.1A6.7 6.7 0 0 0 19.2 11.5z"/></svg>
+            <div class="icon-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
             </div>
             <div class="icon-item plus-btn" id="plusBtn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14m-7-7h14"/></svg>
@@ -22,9 +22,11 @@
     <main class="main-container">
         <div id="auth-screen">
             <a href="/api/login" class="btn-connect">CONECTAR COM DISCORD</a>
+            
             <div class="auth-footer">
                 <p class="project-name">© FAULT SERVER</p>
                 <p class="dev-name">DEVELOPER: FAULT</p>
+                
                 <div class="auth-socials">
                     <a href="https://discord.gg/AGCCbEAWA" target="_blank" class="social-icon">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -47,6 +49,9 @@
         </div>
 
         <div id="main-screen" class="hidden">
+            <div id="user-info">
+                <span id="server-title">FAULT SERVER</span>
+            </div>
             <div class="content" id="messages-container"></div>
             <div id="typing-indicator" style="padding: 5px 15px; font-size: 12px; color: #888; display: none;">
                 ... <span id="typing-username"></span> está digitando...
@@ -61,6 +66,7 @@
                     <input type="file" id="fileInput" accept="image/*" style="display: none;">
                     <button class="add-img-btn" id="addImgBtn">+</button>
                     <input type="search" id="msgInput" name="q" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Digite sua mensagem...">
+                    
                     <button class="action-btn" id="actionBtn">
                         <svg id="icon-send" class="hidden" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="9 18 15 12 9 6"></polyline>
@@ -74,6 +80,7 @@
             </footer>
         </div>
     </main>
+
     <script type="module" src="script.js"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, onValue, set, remove, onChildRemoved } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, set, remove } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBX5mGILY9TT_M8S79X4UTRbHinH1PB6gI",
@@ -28,8 +28,6 @@ const messagesContainer = document.getElementById('messages-container');
 const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
 const scrollBottomBtn = document.getElementById('scrollBottomBtn');
-const typingIndicator = document.getElementById('typing-indicator');
-const typingUsername = document.getElementById('typing-username');
 
 const trashBtn = document.createElement('button');
 trashBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
@@ -107,21 +105,31 @@ function updateRecordingWaveform() {
 function openImageOverlay(src) {
     const overlay = document.createElement('div');
     overlay.className = 'image-overlay';
+    
     const closeBtn = document.createElement('div');
     closeBtn.className = 'close-overlay-btn';
     closeBtn.innerText = '×';
+    
     const img = document.createElement('img');
     img.src = src;
+    
     overlay.appendChild(closeBtn);
     overlay.appendChild(img);
+    
+    // Lógica de toggle: Clicar na imagem esconde/mostra o X
     img.onclick = (e) => {
         e.stopPropagation();
         closeBtn.style.display = (closeBtn.style.display === 'none') ? 'flex' : 'none';
     };
+    
+    // O clique no X fecha a imagem
     closeBtn.onclick = () => overlay.remove();
+    
+    // O clique no fundo (overlay) NÃO faz nada, apenas o clique na imagem ou no X
     overlay.onclick = (e) => { 
         if(e.target === closeBtn) overlay.remove(); 
     };
+    
     document.body.appendChild(overlay);
 }
 
@@ -130,6 +138,7 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
     const date = new Date(data.timestamp);
     const dateStr = date.toLocaleDateString('pt-BR');
     const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message';
     msgDiv.innerHTML = `
@@ -142,26 +151,15 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
             ${data.message}
         </div>
     `;
+    
     const imgElement = msgDiv.querySelector('img[src^="data:image"]');
     if (imgElement) {
         imgElement.style.cursor = 'pointer';
         imgElement.onclick = () => openImageOverlay(imgElement.src);
     }
+
     messagesContainer.prepend(msgDiv);
     if (messagesContainer.scrollTop > -100) messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
-onValue(ref(db, 'typing'), (snapshot) => {
-    const typers = snapshot.val();
-    if (typers) {
-        const userId = Object.keys(typers)[0];
-        if (userId !== window.userData?.id) {
-            typingUsername.innerText = typers[userId].username;
-            typingIndicator.style.display = 'block';
-        }
-    } else {
-        typingIndicator.style.display = 'none';
-    }
 });
 
 function sendMessage() {
@@ -191,11 +189,13 @@ async function startRecording() {
         source.connect(analyser);
         analyser.fftSize = 32;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
+        
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
         recordingStartTime = Date.now();
         elapsedPausedTime = 0;
         isDiscarding = false;
+        
         iconMic.classList.add('hidden');
         iconSend.classList.remove('hidden');
         iconSend.style.color = "#666";
@@ -203,7 +203,9 @@ async function startRecording() {
         trashBtn.style.display = "block";
         pauseBtn.style.display = "block";
         msgInput.value = "0:00 - 2:00";
+        
         updateRecordingWaveform();
+        
         recordingInterval = setInterval(() => {
             if (mediaRecorder.state === "recording") {
                 const elapsed = Math.floor((Date.now() - recordingStartTime - elapsedPausedTime) / 1000);
@@ -211,10 +213,12 @@ async function startRecording() {
                 if (elapsed >= 120) stopRecording();
             }
         }, 1000);
+
         mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
         mediaRecorder.onstop = () => {
             clearInterval(recordingInterval);
             cancelAnimationFrame(animationId);
+            
             if (!isDiscarding && audioChunks.length > 0) {
                 const totalDuration = formatDuration(Math.floor((Date.now() - recordingStartTime - elapsedPausedTime) / 1000));
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -237,6 +241,7 @@ async function startRecording() {
                     });
                 };
             }
+            
             msgInput.value = '';
             iconMic.classList.remove('hidden');
             iconSend.classList.add('hidden');
@@ -295,15 +300,12 @@ msgInput.addEventListener('input', () => {
     const hasText = msgInput.value.trim().length > 0;
     iconMic.classList.toggle('hidden', hasText);
     iconSend.classList.toggle('hidden', !hasText);
-    if(hasText){
-        set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {
-            remove(ref(db, 'typing/' + window.userData.id));
-        }, 3000);
-    } else {
+    
+    set(ref(db, 'typing/' + window.userData.id), { username: window.userData.username });
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
         remove(ref(db, 'typing/' + window.userData.id));
-    }
+    }, 3000);
 });
 
 plusBtn.addEventListener('click', () => {
