@@ -27,9 +27,18 @@ const iconSend = document.getElementById('icon-send');
 const messagesContainer = document.getElementById('messages-container');
 const fileInput = document.getElementById('fileInput');
 const addImgBtn = document.getElementById('addImgBtn');
-const scrollDownBtn = document.getElementById('scrollBottomBtn');
+const scrollBottomBtn = document.getElementById('scrollBottomBtn');
 
-let selectedMessageId = null;
+const trashBtn = document.createElement('button');
+trashBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+trashBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #ff4d4d; margin-right: 10px;";
+addImgBtn.parentNode.insertBefore(trashBtn, addImgBtn);
+
+const pauseBtn = document.createElement('button');
+pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
+pauseBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #fff; margin-right: 10px;";
+addImgBtn.parentNode.insertBefore(pauseBtn, trashBtn);
+
 let typingTimeout;
 let mediaRecorder;
 let audioChunks = [];
@@ -42,41 +51,6 @@ let animationId;
 let elapsedPausedTime = 0;
 let lastPauseTime = 0;
 let isDiscarding = false;
-
-const deleteBtn = document.createElement('button');
-deleteBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-deleteBtn.style.cssText = "display: none; background: #ff4d4d; border: none; color: white; border-radius: 5px; cursor: pointer; padding: 5px 10px; margin-bottom: 10px;";
-document.body.prepend(deleteBtn);
-
-deleteBtn.onclick = () => {
-    if (selectedMessageId) {
-        remove(ref(db, 'messages/' + selectedMessageId));
-        deleteBtn.style.display = "none";
-        selectedMessageId = null;
-    }
-};
-
-const trashBtn = document.createElement('button');
-trashBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-trashBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #ff4d4d; margin-right: 10px;";
-addImgBtn.parentNode.insertBefore(trashBtn, addImgBtn);
-
-const pauseBtn = document.createElement('button');
-pauseBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
-pauseBtn.style.cssText = "display: none; background: transparent; border: none; cursor: pointer; color: #fff; margin-right: 10px;";
-addImgBtn.parentNode.insertBefore(pauseBtn, trashBtn);
-
-messagesContainer.addEventListener('scroll', () => {
-    if (messagesContainer.scrollTop > 150) {
-        scrollDownBtn.classList.remove('hidden');
-    } else {
-        scrollDownBtn.classList.add('hidden');
-    }
-});
-
-scrollDownBtn.addEventListener('click', () => {
-    messagesContainer.scrollTo({ top: 0, behavior: 'smooth' });
-});
 
 function generateWaveBars(count = 20) {
     let bars = "";
@@ -148,6 +122,7 @@ function openImageOverlay(src) {
     };
     
     closeBtn.onclick = () => overlay.remove();
+    
     overlay.onclick = (e) => { 
         if(e.target === closeBtn) overlay.remove(); 
     };
@@ -162,7 +137,7 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
     const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     
     const msgDiv = document.createElement('div');
-    msgDiv.className = 'message';
+    msgDiv.className = 'message message-entrance'; // Adicionada classe de animação
     msgDiv.innerHTML = `
         <div class="msg-header">
             <img class="msg-avatar" src="https://cdn.discordapp.com/avatars/${data.userId}/${data.avatar}.png">
@@ -173,13 +148,6 @@ onChildAdded(ref(db, 'messages'), (snapshot) => {
             ${data.message}
         </div>
     `;
-
-    msgDiv.oncontextmenu = (e) => {
-        e.preventDefault();
-        selectedMessageId = snapshot.key;
-        deleteBtn.style.display = "block";
-        msgDiv.style.border = "1px solid red";
-    };
     
     const imgElement = msgDiv.querySelector('img[src^="data:image"]');
     if (imgElement) {
@@ -382,5 +350,4 @@ if (token) {
         window.history.replaceState({}, document.title, "/");
     });
 }
-
 msgInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
